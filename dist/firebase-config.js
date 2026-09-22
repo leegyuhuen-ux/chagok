@@ -1,6 +1,6 @@
 // Public web app configuration from Firebase Console. Never add private keys.
 window.CHAGOK_FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyCN4P-cE1fiU5xnPAmx6z2dsF8DR0op_ac',
+  apiKey: 'AIzaSyCN4P-cE1fjU5xnPAmx6z2dsF8DR0op_ac',
   authDomain: 'chagok1-173f9.firebaseapp.com',
   projectId: 'chagok1-173f9',
   storageBucket: 'chagok1-173f9.firebasestorage.app',

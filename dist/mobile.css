@@ -1,4 +1,16 @@
 /* Responsive refinements. Calendar details stay readable in the daily panel. */
+.brand-by{display:block;font:normal 14px/1.5 "Malgun Gothic",sans-serif;letter-spacing:0;color:#55704e}
+.brand>span:last-child{min-width:0}
+.membership-locked .sidebar,.membership-locked .prototype{display:none}
+.membership-locked main{margin-left:0;max-width:1100px;margin-right:auto;margin-left:auto}
+.access-card{max-width:520px;margin:clamp(24px,7vh,80px) auto;padding:clamp(20px,5vw,40px);background:white;border:1px solid var(--line);border-radius:14px}
+.access-card h1{font-size:clamp(24px,4vw,32px);line-height:1.5;overflow-wrap:anywhere}
+.access-card p{margin:18px 0;line-height:1.8}
+.access-card>.primary{width:100%;margin-top:20px;min-height:48px}
+.access-card form{margin-top:24px}.access-card input{font-size:16px;min-height:48px}
+.form-error{color:#9c3434;font-size:14px;overflow-wrap:anywhere}
+button:disabled{opacity:.55;cursor:wait}
+.profile b{display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html{ -webkit-text-size-adjust:100%;text-size-adjust:100% }
 main,#app,.workspace,.calendar-box,.day-panel,.card,.preview-copy,.list-item>div,.page-heading>div,.field{min-width:0}
 .card h2,.card p,.record h3,.record p,.list-item h3,.comment,.notice{overflow-wrap:anywhere}

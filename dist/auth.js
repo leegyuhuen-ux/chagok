@@ -16,6 +16,16 @@
     async signOut() {
       if (!auth) throw {code:'app/not-ready'};
       await sdk.signOut(auth);
+    },
+    async setNickname(nickname) {
+      const user = auth?.currentUser;
+      if (!user) throw {code:'auth/requires-recent-login'};
+      const value = String(nickname).trim().normalize('NFC');
+      if (!/^[가-힣a-zA-Z0-9_]{2,16}$/.test(value)) throw {code:'app/invalid-nickname'};
+      await sdk.updateProfile(user, {displayName:value});
+      if (auth.currentUser?.uid !== user.uid) throw {code:'auth/user-mismatch'};
+      api.user = {...api.user, displayName:value};
+      return {uid:user.uid, nickname:value};
     }
   };
   function emit() { window.dispatchEvent(new CustomEvent('chagok-auth-change')); }

@@ -1,0 +1,13 @@
+{
+  "name": "chagok-by-barati",
+  "private": true,
+  "scripts": {
+    "test:ui": "node tests/cloud-ui.cjs",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-chagok \"node tests/cloud-store.cjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.30.2"
+  }
+}

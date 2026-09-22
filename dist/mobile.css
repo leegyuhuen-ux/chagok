@@ -11,6 +11,9 @@
 .form-error{color:#9c3434;font-size:14px;overflow-wrap:anywhere}
 button:disabled{opacity:.55;cursor:wait}
 .profile b{display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sync-status{font-size:12px;color:#55704e;margin-left:auto;padding:0 12px}
+.topbar{gap:8px;flex-wrap:wrap}
+@media(max-width:720px){#sync-status{order:3;width:100%;margin:0;padding:0}.topbar{padding:8px 0}.access-card .text-button{display:block;margin:12px auto}}
 html{ -webkit-text-size-adjust:100%;text-size-adjust:100% }
 main,#app,.workspace,.calendar-box,.day-panel,.card,.preview-copy,.list-item>div,.page-heading>div,.field{min-width:0}
 .card h2,.card p,.record h3,.record p,.list-item h3,.comment,.notice{overflow-wrap:anywhere}

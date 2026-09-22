@@ -2,9 +2,14 @@
 (() => {
   const config = window.CHAGOK_FIREBASE_CONFIG;
   const configured = !!config && ['apiKey', 'authDomain', 'projectId', 'appId'].every(k => typeof config[k] === 'string' && config[k].trim());
-  let auth, sdk, provider, busy = false;
+  let auth, sdk, app, provider, storePromise, busy = false;
   const api = window.chagokAuth = {
     configured, ready: !configured, user: null, error: null,
+    async getStore() {
+      if (!auth?.currentUser) throw {code:'auth/requires-recent-login'};
+      if (!storePromise) storePromise=import('https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js').then(firestore=>window.createChagokStore({db:firestore.getFirestore(app),sdk:firestore,getUid:()=>auth.currentUser?.uid})).catch(error=>{storePromise=null;throw error});
+      return storePromise;
+    },
     signIn() {
       if (!configured) return Promise.reject({code:'app/not-configured'});
       if (!api.ready || !auth) return Promise.reject({code:'app/not-ready'});
@@ -16,17 +21,8 @@
     async signOut() {
       if (!auth) throw {code:'app/not-ready'};
       await sdk.signOut(auth);
-    },
-    async setNickname(nickname) {
-      const user = auth?.currentUser;
-      if (!user) throw {code:'auth/requires-recent-login'};
-      const value = String(nickname).trim().normalize('NFC');
-      if (!/^[가-힣a-zA-Z0-9_]{2,16}$/.test(value)) throw {code:'app/invalid-nickname'};
-      await sdk.updateProfile(user, {displayName:value});
-      if (auth.currentUser?.uid !== user.uid) throw {code:'auth/user-mismatch'};
-      api.user = {...api.user, displayName:value};
-      return {uid:user.uid, nickname:value};
     }
+
   };
   function emit() { window.dispatchEvent(new CustomEvent('chagok-auth-change')); }
   if (!configured) return;
@@ -38,7 +34,8 @@
         import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js')
       ]);
       sdk = authModule;
-      auth = sdk.getAuth(appModule.initializeApp(config));
+      app = appModule.initializeApp(config);
+      auth = sdk.getAuth(app);
       auth.languageCode = 'ko';
       await sdk.setPersistence(auth, sdk.browserLocalPersistence);
       provider = new sdk.GoogleAuthProvider();

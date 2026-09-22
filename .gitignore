@@ -2,3 +2,6 @@
 Thumbs.db
 .env
 .env.*
+node_modules/
+*-debug.log
+.firebase/

@@ -138,3 +138,42 @@ footer{gap:16px;flex-wrap:wrap}
 @media(max-width:360px){.brand small{display:none}}
 .tea-chip{width:max-content;max-width:100%;align-self:flex-start}
 .brand small{word-break:keep-all;line-height:1.6}
+
+/* Photos, event cards and a menu that exists only for the verified administrator. */
+#admin-slot{display:contents}
+#admin-slot button{min-height:44px;text-align:left}
+.post-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0;min-height:96px}
+.post-photos:has(>button:only-child){grid-template-columns:minmax(0,1fr)}
+.post-photos:has(>button:nth-child(2):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+.post-photos>.sub{grid-column:1/-1;align-self:center}
+.card .photo-thumb{display:block;padding:0;border:0;border-radius:8px;overflow:hidden;background:#edf1e8;aspect-ratio:4/3;min-width:0}
+.card .photo-thumb img{display:block;width:100%;height:100%;margin:0;object-fit:cover;aspect-ratio:auto}
+.photo-previews{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.photo-previews figure{margin:0;min-width:0}
+.photo-previews img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.photo-previews button{width:100%;font-size:12px;padding:8px 3px;min-height:44px}
+#post-photo-editor input[type=file]{max-width:100%;padding:10px 6px;overflow:hidden}
+.photo-status{min-height:24px;font-size:14px;margin:8px 0}
+.photo-viewer{max-width:1000px;width:calc(100% - 32px)}
+.full-photo{display:block;max-width:100%;max-height:65dvh;margin:auto;object-fit:contain}
+.photo-pager{display:flex;justify-content:center;gap:10px;margin-top:16px}
+.photo-pager button{min-width:44px;min-height:44px}
+.photo-pager [aria-pressed=true]{background:var(--green);color:white}
+.event-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.event-card{min-width:0;padding:24px;background:white;border:1px solid var(--line);border-radius:12px}
+.event-card h2{font-size:24px;line-height:1.5;overflow-wrap:anywhere;word-break:keep-all;margin:12px 0}
+.event-card p{line-height:1.8;font-size:16px}
+.event-card dl{margin:16px 0;font-size:14px}
+.event-card dl>div{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;margin:8px 0}
+.event-card dt{color:var(--muted)}.event-card dd{margin:0;overflow-wrap:anywhere}
+.event-badge{display:inline-block;border-radius:20px;padding:5px 12px;font-size:13px;background:#eaf0e3;color:#344e3f}
+.event-badge.draft{background:#efede8;color:#665f52}.event-badge.cancelled{background:#f7e8e6;color:#923e3e}
+.card-actions button,.photo-thumb{touch-action:manipulation}
+@media(max-width:1100px){.event-list{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:720px){
+ #admin-slot button{font-size:12px;padding:4px;white-space:nowrap}
+ .event-card{padding:20px}.event-card h2{font-size:22px}
+ .photo-previews{gap:6px}.photo-previews button{font-size:11px}
+ .photo-viewer{width:calc(100% - 24px);padding:16px}
+ .field input[type=datetime-local]{width:100%;min-width:0;max-width:100%}
+}

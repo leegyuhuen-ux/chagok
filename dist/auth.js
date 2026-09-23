@@ -2,7 +2,7 @@
 (() => {
   const config = window.CHAGOK_FIREBASE_CONFIG;
   const configured = !!config && ['apiKey', 'authDomain', 'projectId', 'appId'].every(k => typeof config[k] === 'string' && config[k].trim());
-  let auth, sdk, app, provider, storePromise, busy = false;
+  let auth, sdk, app, provider, storePromise, busy = false, authVersion = 0;
   const api = window.chagokAuth = {
     configured, ready: !configured, user: null, error: null,
     async getCommunity() {
@@ -45,9 +45,17 @@
       await sdk.setPersistence(auth, sdk.browserLocalPersistence);
       provider = new sdk.GoogleAuthProvider();
       provider.setCustomParameters({prompt:'select_account'});
-      sdk.onAuthStateChanged(auth, user => {
-        api.user = user ? {uid:user.uid, displayName:user.displayName || '차벗', email:user.email || '', isAdmin:user.email==='leegyuhuen@gmail.com'&&user.emailVerified&&user.providerData.some(p=>p.providerId==='google.com')} : null;
-        api.ready = true; api.error = null; emit();
+      sdk.onAuthStateChanged(auth, async user => {
+        const version=++authVersion;
+        api.user=null;api.ready=false;emit();
+        try {
+          const token=user?await sdk.getIdTokenResult(user):null;
+          if(version!==authVersion||auth.currentUser?.uid!==user?.uid)return;
+          const claims=token?.claims;
+          const isAdmin=claims?.email==='leegyuhuen@gmail.com'&&claims.email_verified===true&&claims.firebase?.sign_in_provider==='google.com';
+          api.user=user?{uid:user.uid,displayName:user.displayName||'차벗',email:user.email||'',isAdmin}:null;
+          api.ready=true;api.error=null;emit();
+        } catch(error) {if(version===authVersion){api.ready=true;api.error=error.code||'app/auth-error';emit();}}
       }, error => { api.error = error.code || 'app/auth-error'; api.ready = true; emit(); });
     } catch (error) {
       api.error = error.code || 'app/network-error'; api.ready = true; emit();

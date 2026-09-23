@@ -47,6 +47,37 @@ async function main(){
   await assertFails(A.savePost('alice',{...input,author:'새이름'},id,5));
   await assertFails(Admin.moderate('admin',id,false,5));
   console.log('PASS shared announcements, deletion after nickname change, deleted-post resurrection denied');
+  const photo='data:image/jpeg;base64,/9j/AA==';
+  const photoInput={...input,author:'새이름',photos:[photo,photo,photo]};
+  const photoId=await A.savePost('alice',photoInput);
+  assert.equal((await sdk.getDocFromServer(sdk.doc(b,'posts',photoId))).data().photoCount,3);
+  assert.equal((await B.loadPhotos('bob',photoId)).length,3);
+  await assertFails(make(guest,'guest').loadPhotos('guest',photoId));
+  await assertFails(sdk.setDoc(sdk.doc(b,'posts',photoId,'media','photos'),{photos:[photo]}));
+  await assertFails(sdk.deleteDoc(sdk.doc(a,'posts',photoId,'media','photos')));
+  await assert.rejects(()=>A.savePost('alice',{...photoInput,photos:['javascript:alert(1)']}));
+  await assert.rejects(()=>A.savePost('alice',{...photoInput,photos:[photo,photo,photo,photo]}));
+  const forged=sdk.writeBatch(a);forged.update(sdk.doc(a,'posts',photoId),{revision:1,photoCount:1,updatedAt:sdk.serverTimestamp()});forged.set(sdk.doc(a,'posts',photoId,'media','photos'),{photos:['data:image/svg+xml;base64,AAA=']});await assertFails(forged.commit());
+  const tooBig=sdk.writeBatch(a);tooBig.update(sdk.doc(a,'posts',photoId),{revision:1,photoCount:1,updatedAt:sdk.serverTimestamp()});tooBig.set(sdk.doc(a,'posts',photoId,'media','photos'),{photos:['data:image/jpeg;base64,'+'A'.repeat(200000)]});await assertFails(tooBig.commit());
+  await Admin.moderate('admin',photoId,true,0);await assertFails(B.loadPhotos('bob',photoId));
+  await A.savePost('alice',{...photoInput,photos:[photo]},photoId,1);assert.equal((await A.loadPhotos('alice',photoId)).length,1);
+  await A.deletePost('alice',photoId,2);await assertFails(B.loadPhotos('bob',photoId));
+  await env.withSecurityRulesDisabled(async c=>assert.equal((await sdk.getDoc(sdk.doc(c.firestore(),'posts',photoId,'media','photos'))).exists(),false));
+  console.log('PASS shared photos, atomic replacement/removal, invalid formats/sizes/counts, hidden and deleted media isolation');
+  const event={title:'함께하는 우롱차',description:'이벤트 안내',venue:'서울',startsAt:new Date('2026-10-01T18:00:00+09:00'),endsAt:new Date('2026-10-01T19:00:00+09:00'),status:'draft'};
+  await assertFails(B.saveEvent('bob',event));await assertFails(make(fake,'fake').saveEvent('fake',event));
+  const eventId=await Admin.saveEvent('admin',event);await assertFails(sdk.getDocFromServer(sdk.doc(b,'events',eventId)));
+  await assertFails(Admin.saveEvent('admin',{...event,endsAt:event.startsAt}));
+  await Admin.saveEvent('admin',{...event,status:'published'},eventId,0);
+  assert.equal((await sdk.getDocFromServer(sdk.doc(b,'events',eventId))).data().title,event.title);
+  await assertFails(sdk.getDocFromServer(sdk.doc(guest,'events',eventId)));
+  await assertFails(B.saveEvent('bob',{...event,status:'published'},eventId,1));await assertFails(B.deleteEvent('bob',eventId,1));
+  await assert.rejects(()=>Admin.saveEvent('admin',event,eventId,0),e=>e.code==='app/conflict');
+  await Admin.saveEvent('admin',{...event,status:'cancelled'},eventId,1);
+  assert.equal((await sdk.getDocs(sdk.query(sdk.collection(b,'events'),sdk.where('status','in',['published','cancelled'])))).size,1);
+  await Admin.deleteEvent('admin',eventId,2);
+  assert.equal((await sdk.getDocFromServer(sdk.doc(ad,'events',eventId))).exists(),false);
+  console.log('PASS admin-only events, hidden drafts, public/cancelled read, date validation, conflict protection, removal');
  }finally{await env.cleanup()}
 }
 main().catch(e=>{console.error(e);process.exitCode=1});

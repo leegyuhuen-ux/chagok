@@ -15,9 +15,22 @@ service cloud.firestore {
       return name is string && name.matches('^[가-힣a-zA-Z0-9_]{2,16}$')
         && name == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.nickname;
     }
-    function validPost() {
+    function validPhoto(p) {
+      return p is string && p.size() <= 200000
+        && p.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}$');
+    }
+    function validPhotos(p) {
+      return p is list && p.size() >= 1 && p.size() <= 3
+        && validPhoto(p[0]) && (p.size() < 2 || validPhoto(p[1]))
+        && (p.size() < 3 || validPhoto(p[2]));
+    }
+    function validPost(id) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['kind','type','name','note','author','authorUid','hidden','deleted','createdAt','updatedAt','revision'])
+      let count = d.get('photoCount', 0);
+      return d.keys().hasOnly(['kind','type','name','note','author','authorUid','hidden','deleted','createdAt','updatedAt','revision','photoCount'])
+        && count is int && count >= 0 && count <= 3
+        && ((count == 0 && !existsAfter(/databases/$(database)/documents/posts/$(id)/media/photos))
+          || (count > 0 && getAfter(/databases/$(database)/documents/posts/$(id)/media/photos).data.photos.size() == count))
         && d.kind in ['record','talk'] && d.type in ['보이차','우롱차','홍차']
         && d.name is string && d.name.size() > 0 && d.name.size() <= 80
         && d.note is string && d.note.size() <= 3000
@@ -28,11 +41,11 @@ service cloud.firestore {
     }
     match /posts/{id} {
       allow read: if member() && (resource.data.hidden == false || admin() || owner(resource.data.authorUid));
-      allow create: if member() && validPost() && owner(request.resource.data.authorUid)
+      allow create: if member() && validPost(id) && owner(request.resource.data.authorUid)
         && authorName(request.resource.data.author) && request.resource.data.hidden == false
         && request.resource.data.deleted == false && request.resource.data.revision == 0
         && request.resource.data.createdAt == request.time;
-      allow update: if member() && validPost()
+      allow update: if member() && validPost(id)
         && request.resource.data.authorUid == resource.data.authorUid
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.revision == resource.data.revision + 1
@@ -41,9 +54,26 @@ service cloud.firestore {
           && ((authorName(request.resource.data.author) && request.resource.data.hidden == resource.data.hidden && request.resource.data.deleted == false)
             || (request.resource.data.deleted == true && request.resource.data.hidden == true
               && request.resource.data.author == resource.data.author
+              && request.resource.data.get('photoCount', 0) == 0
               && request.resource.data.name == '삭제된 게시글' && request.resource.data.note == '')))
           || (admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden','revision','updatedAt'])));
       allow delete: if false;
+      match /media/{mediaId} {
+        function parent() { return get(/databases/$(database)/documents/posts/$(id)).data; }
+        function parentAfter() { return getAfter(/databases/$(database)/documents/posts/$(id)).data; }
+        function accompaniesPost() {
+          return !exists(/databases/$(database)/documents/posts/$(id))
+            || parentAfter().revision == parent().revision + 1;
+        }
+        allow read: if member() && mediaId == 'photos' && parent().deleted == false && parent().get('photoCount', 0) > 0
+          && (parent().hidden == false || admin() || owner(parent().authorUid));
+        allow create, update: if mediaId == 'photos' && member()
+          && owner(parentAfter().authorUid) && parentAfter().deleted == false && accompaniesPost()
+          && request.resource.data.keys().hasOnly(['photos']) && validPhotos(request.resource.data.photos)
+          && request.resource.data.photos.size() == parentAfter().photoCount;
+        allow delete: if mediaId == 'photos' && member() && owner(parentAfter().authorUid)
+          && parentAfter().photoCount == 0 && accompaniesPost();
+      }
       match /comments/{commentId} {
         function visible() { return get(/databases/$(database)/documents/posts/$(id)).data.hidden == false; }
         allow read: if member() && visible();
@@ -65,6 +95,25 @@ service cloud.firestore {
         && request.resource.data.title.size() <= 100 && request.resource.data.createdAt == request.time;
       allow delete: if admin();
       allow update: if false;
+    }
+    match /events/{id} {
+      function validEvent() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['title','description','venue','startsAt','endsAt','status','authorUid','createdAt','updatedAt','revision'])
+          && d.title is string && d.title.size() > 0 && d.title.size() <= 80
+          && d.description is string && d.description.size() <= 2000
+          && d.venue is string && d.venue.size() <= 100
+          && d.startsAt is timestamp && d.endsAt is timestamp && d.endsAt > d.startsAt
+          && d.status in ['draft','published','cancelled'] && d.authorUid is string
+          && d.createdAt is timestamp && d.updatedAt == request.time && d.revision is int;
+      }
+      allow read: if member() && (admin() || resource.data.status in ['published','cancelled']);
+      allow create: if admin() && validEvent() && owner(request.resource.data.authorUid)
+        && request.resource.data.createdAt == request.time && request.resource.data.revision == 0;
+      allow update: if admin() && validEvent() && request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if admin();
     }
     function validData() {
       let d = request.resource.data;

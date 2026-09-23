@@ -1,0 +1,52 @@
+const fs=require('fs'),assert=require('node:assert/strict'),sdk=require('firebase/firestore');
+const {initializeTestEnvironment,assertFails}=require('@firebase/rules-unit-testing');
+const {createCommunityStore}=require('../dist/community-store.js');
+const {createChagokStore}=require('../dist/cloud-store.js');
+async function main(){
+ const env=await initializeTestEnvironment({projectId:'demo-chagok',firestore:{host:'127.0.0.1',port:8088,rules:fs.readFileSync(require('path').join(__dirname,'../firestore.rules'),'utf8')}});
+ try{
+  await env.clearFirestore();
+  const db=(uid,claims={})=>env.authenticatedContext(uid,claims).firestore();
+  const a=db('alice'),b=db('bob'),ad=db('admin',{email:'leegyuhuen@gmail.com',email_verified:true,firebase:{sign_in_provider:'google.com'}}),fake=db('fake',{email:'leegyuhuen@gmail.com',email_verified:false,firebase:{sign_in_provider:'google.com'}}),guest=env.unauthenticatedContext().firestore();
+  const make=(db,uid)=>createCommunityStore({db,sdk,getUid:()=>uid});
+  const A=make(a,'alice'),B=make(b,'bob'),Admin=make(ad,'admin');
+  for(const [db,uid,nickname] of [[a,'alice','차벗'],[b,'bob','다른차벗'],[ad,'admin','운영자']])await createChagokStore({db,sdk,getUid:()=>uid}).load(uid,{nickname});
+  const input={kind:'record',type:'우롱차',name:'함께 보는 차',note:'공유된 감상',author:'차벗'};
+  let stop;const received=new Promise((resolve,reject)=>{stop=B.watch('bob',false,rows=>{if(rows.some(p=>p.name===input.name))resolve(rows)},reject)});
+  const id=await A.savePost('alice',input);await received;stop();
+  assert.equal((await sdk.getDocFromServer(sdk.doc(b,'posts',id))).data().note,input.note);
+  await assertFails(sdk.getDocFromServer(sdk.doc(b,'users','alice')));
+  await assertFails(sdk.getDocFromServer(sdk.doc(guest,'posts',id)));
+  await assertFails(B.savePost('bob',input));
+  await assertFails(B.savePost('bob',{...input,author:'다른차벗'},id,0));
+  console.log('PASS real-time second-member reads, private journal isolation, guest denial and author spoof denial');
+  await B.comment('bob',id,'다른 회원의 댓글','다른차벗');
+  const comments=await sdk.getDocs(sdk.collection(a,'posts',id,'comments'));assert.equal(comments.docs[0].data().author,'다른차벗');
+  await assertFails(A.deleteComment('alice',id,comments.docs[0].id));
+  await Admin.deleteComment('admin',id,comments.docs[0].id);
+  await A.savePost('alice',{...input,note:'수정 완료'},id,0);
+  await assert.rejects(()=>A.savePost('alice',input,id,0),e=>e.code==='app/conflict');
+  await assertFails(B.moderate('bob',id,true,1));
+  await assertFails(make(fake,'fake').moderate('fake',id,true,1));
+  await Admin.moderate('admin',id,true,1);
+  await assertFails(sdk.getDocFromServer(sdk.doc(b,'posts',id)));
+  await assertFails(B.comment('bob',id,'숨긴 글 댓글','다른차벗'));
+  await assertFails(sdk.updateDoc(sdk.doc(a,'posts',id),{hidden:false,revision:3,updatedAt:sdk.serverTimestamp()}));
+  await A.savePost('alice',{...input,note:'수정해도 숨김 유지'},id,2);
+  assert.equal((await sdk.getDocFromServer(sdk.doc(ad,'posts',id))).data().hidden,true);
+  await Admin.moderate('admin',id,false,3);
+  assert.equal((await sdk.getDocFromServer(sdk.doc(b,'posts',id))).data().hidden,false);
+  console.log('PASS shared comments, author edit conflict, admin-only hide/restore, hidden post/comment denial, unverified admin denial');
+  await assertFails(B.notice('bob','가짜 공지'));await Admin.notice('admin','회원 전체 공지');
+  assert.equal((await sdk.getDocs(sdk.collection(b,'announcements'))).docs[0].data().title,'회원 전체 공지');
+  await assertFails(sdk.getDocs(sdk.collection(guest,'announcements')));
+  // A nickname change must not prevent deleting an earlier post.
+  const personal=createChagokStore({db:a,sdk,getUid:()=> 'alice'}),old=await personal.load('alice');await personal.save('alice',{...old.state,nickname:'새이름'},old.revision);
+  await A.deletePost('alice',id,4);
+  await assertFails(sdk.getDocFromServer(sdk.doc(b,'posts',id)));
+  await assertFails(A.savePost('alice',{...input,author:'새이름'},id,5));
+  await assertFails(Admin.moderate('admin',id,false,5));
+  console.log('PASS shared announcements, deletion after nickname change, deleted-post resurrection denied');
+ }finally{await env.cleanup()}
+}
+main().catch(e=>{console.error(e);process.exitCode=1});

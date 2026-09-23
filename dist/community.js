@@ -1,0 +1,58 @@
+'use strict';
+let community={uid:null,items:[],notices:[],phase:'idle',error:null,stops:[]},commentStop=null,communityBusy=false,modalVersion=0;
+const jsArg=value=>esc(JSON.stringify(value));
+const originalOpenModal=openModal;openModal=function(title,body){commentStop?.();commentStop=null;modalVersion++;originalOpenModal(title,body);};
+const newest=items=>[...items].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)||b.id.localeCompare(a.id));
+function resetCommunity(){community.stops.forEach(stop=>stop());commentStop?.();commentStop=null;community={uid:null,items:[],notices:[],phase:'idle',error:null,stops:[]};communityBusy=false;modalVersion++;}
+function closeModal(){commentStop?.();commentStop=null;modalVersion++;$('#modal').close();}
+function isAdmin(){return isMember()&&currentUser.isAdmin===true;}
+async function startCommunity(){
+ if(!isMember()||community.uid===currentUser.uid)return;
+ resetCommunity();const session=community,uid=currentUser.uid;session.uid=uid;session.phase='loading';
+ try{const api=await chagokAuth.getCommunity();if(session!==community||uid!==currentUser?.uid)return;
+  session.stops.push(api.watch(uid,isAdmin(),items=>{if(session!==community)return;session.items=items;session.phase='ready';session.error=null;refreshCommunityView();},error=>{if(session!==community)return;session.items=[];session.phase='error';session.error=error.code;refreshCommunityView();}));
+  session.stops.push(api.watchNotices(uid,items=>{if(session!==community)return;session.notices=items;refreshNotices();if(page==='admin')renderAdmin();},()=>{if(session===community){session.notices=[];refreshNotices();}}));
+ }catch(error){if(session!==community)return;session.phase='error';session.error=error.code;refreshCommunityView();}
+}
+function retryCommunity(){resetCommunity();startCommunity();refreshCommunityView();}
+function refreshCommunityView(){if(!isMember())return;if(page==='feed')renderFeed();if(page==='talk')renderTalk();if(page==='admin')renderAdmin();refreshNotices();}
+function refreshNotices(){document.querySelector('#shared-notices')?.remove();if(isMember()&&page!=='admin'&&community.notices.length)$('#app').insertAdjacentHTML('afterbegin',`<div id="shared-notices" class="notice">${newest(community.notices).map(n=>`<div>공지 · ${esc(n.title)}</div>`).join('')}</div>`);}
+// Navigation also refreshes shared announcements without rebuilding open forms.
+const originalCalendar=renderCalendar;renderCalendar=function(){originalCalendar();refreshNotices();};
+const originalGo=go;go=function(p){if(p==='admin'&&!isAdmin()){toast('관리자 계정으로만 이용할 수 있어요.');return;}originalGo(p);refreshNotices();};
+function posts(){return isMember()?newest(community.items.filter(p=>!p.hidden&&!p.deleted)):[];}
+function communityMessage(){return community.phase==='error'?`<div class="notice" role="alert">게시판을 불러오지 못했어요. ${esc(cloudError(community.error))} <button class="small-btn" onclick="retryCommunity()">다시 시도</button></div>`:community.phase!=='ready'?'<p class="empty" role="status">회원들의 이야기를 불러오고 있어요…</p>':'';}
+function postCard(p){return `<article class="card"><div class="meta">${esc(p.author)} · ${p.createdAt?.seconds?new Date(p.createdAt.seconds*1000).toLocaleDateString('ko-KR'):'방금'}</div>${chip(p)}<h2>${esc(p.name)}</h2><p class="post-note">${esc(p.note)}</p><div class="card-actions"><button onclick="comments(${jsArg(p.id)})">댓글 보기</button><button aria-pressed="${state.saved.includes(p.id)}" onclick="toggle('saved',${jsArg(p.id)})">${state.saved.includes(p.id)?'저장됨':'저장'}</button>${p.authorUid===currentUser.uid?`<button onclick="editPost(${jsArg(p.id)})">수정</button><button class="danger" onclick="askDeletePost(${jsArg(p.id)})">삭제</button>`:''}</div></article>`;}
+function renderFeed(){if(!requireMember())return;const items=posts().filter(p=>(p.kind==='record'||filter==='저장한 기록')&&(filter==='전체'||p.type===filter||filter==='저장한 기록'&&state.saved.includes(p.id)));$('#app').innerHTML=head('차생활 둘러보기','회원들의 찻자리에서 발견하는 새로운 취향.','<button class="primary" onclick="editPost(null,\'record\')">＋ 차생활 공유하기</button>')+`<div class="filters">${['전체','보이차','우롱차','홍차','저장한 기록'].map(t=>`<button class="${filter===t?'active':''}" onclick="filter='${t}';renderFeed()">${t}</button>`).join('')}</div>`+communityMessage()+`<div class="cards">${items.map(postCard).join('')|| (community.phase==='ready'?'<p class="empty">아직 해당하는 글이 없어요. 첫 찻자리를 나눠보세요.</p>':'')}</div>`;refreshNotices();}
+function renderTalk(){if(!requireMember())return;const items=posts().filter(p=>p.kind==='talk');$('#app').innerHTML=head('이야기방','보이차 · 우롱차 · 홍차에 관한 질문과 이야기를 나눠요.','<button class="primary" onclick="editPost(null,\'talk\')">＋ 이야기 쓰기</button>')+communityMessage()+`<div class="cards">${items.map(postCard).join('')||(community.phase==='ready'?'<p class="empty">첫 이야기를 기다리고 있어요.</p>':'')}</div>`;refreshNotices();}
+function shareRecord(id){if(!requireMember())return;const r=state.records.find(r=>r.id===id);if(r)editPost(null,'record',r);}
+function editPost(id=null,kind='record',seed={}){
+ if(!requireMember())return;const p=id?community.items.find(p=>p.id===id):{...seed,kind};if(!p||p.deleted||(id&&p.authorUid!==currentUser.uid))return;
+ closeModal();openModal(id?'게시글 수정':p.kind==='talk'?'이야기 쓰기':'차생활 공유하기',`<form id="post-form"><p class="notice">게시하면 로그인한 모든 회원이 볼 수 있어요. 캘린더 원본과 게시글은 각각 수정·삭제할 수 있어요.</p><label class="field">차 종류<select name="type">${['보이차','우롱차','홍차'].map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}</select></label><label class="field">제목<input name="name" required maxlength="80" value="${esc(p.name||'')}" placeholder="나누고 싶은 이야기"></label><label class="field">내용<textarea name="note" required maxlength="3000" placeholder="향과 맛, 궁금한 점을 편하게 나눠요.">${esc(p.note||'')}</textarea></label><p class="sub">가향차와 대용차는 다루지 않아요.</p><p id="community-error" class="form-error" role="alert"></p><div class="form-actions"><button class="small-btn" type="button" onclick="closeModal()">취소</button><button class="primary" type="submit">${id?'수정 저장':'게시하기'}</button></div></form>`);
+ const version=modalVersion;$('#post-form').onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));if(!data.name.trim()||!data.note.trim())return toast('제목과 내용을 입력해주세요.');const ok=await communityAction(api=>api.savePost(currentUser.uid,{...data,kind:p.kind,author:nickname()},id,p.revision),e.target);if(ok&&version===modalVersion){closeModal();go(p.kind==='talk'?'talk':'feed');toast('게시글을 서버에 저장했어요.');}};
+}
+async function communityAction(work,form){
+ if(!requireMember()||communityBusy)return false;const session=community,uid=currentUser.uid;communityBusy=true;
+ const button=form?.querySelector('[type=submit]');if(button)button.disabled=true;
+ try{const api=await chagokAuth.getCommunity();if(session!==community||uid!==currentUser?.uid)return false;await work(api);return session===community&&uid===currentUser?.uid;}
+ catch(error){if(session===community){const message=cloudError(error.code);toast(message);const inline=$('#community-error');if(inline)inline.textContent=message;}return false;}
+ finally{if(session===community)communityBusy=false;if(button)button.disabled=false;}
+}
+function askDeletePost(id){const p=community.items.find(p=>p.id===id);if(!requireMember()||p?.authorUid!==currentUser.uid)return;closeModal();openModal('게시글을 삭제할까요?',`<p class="sub">다른 회원에게 더 이상 보이지 않아요. 캘린더 원본은 유지돼요.</p><p id="community-error" role="alert"></p><div class="form-actions"><button class="small-btn" onclick="closeModal()">취소</button><button class="primary" onclick="deleteSharedPost(${jsArg(id)},${p.revision})">삭제하기</button></div>`);}
+async function deleteSharedPost(id,revision){const version=modalVersion;if(await communityAction(api=>api.deletePost(currentUser.uid,id,revision))){if(version===modalVersion)closeModal();toast('게시글을 삭제했어요.');}}
+function comments(id){
+ if(!requireMember())return;const p=posts().find(p=>p.id===id);if(!p)return;closeModal();openModal(esc(p.name),'<div id="shared-comments" aria-live="polite">댓글을 불러오고 있어요…</div><form id="shared-comment-form"><label class="field">댓글<textarea name="text" required maxlength="500" placeholder="함께 나누고 싶은 이야기"></textarea></label><p id="community-error" class="form-error" role="alert"></p><button class="primary" type="submit">댓글 남기기</button></form>');
+ const version=modalVersion,uid=currentUser.uid;
+ chagokAuth.getCommunity().then(api=>{if(version!==modalVersion||uid!==currentUser?.uid)return;commentStop=api.watchComments(uid,id,items=>{if(version!==modalVersion)return;$('#shared-comments').innerHTML=newest(items).reverse().map(c=>`<div class="comment"><b>${esc(c.author)}</b><p class="post-note">${esc(c.text)}</p>${c.authorUid===uid||isAdmin()?`<button class="text-button" onclick="deleteSharedComment(${jsArg(id)},${jsArg(c.id)})">댓글 삭제</button>`:''}</div>`).join('')||'<p class="empty">첫 댓글을 남겨보세요.</p>';},error=>{if(version!==modalVersion)return;$('#shared-comments').textContent='댓글을 불러올 수 없어요. 게시글이 숨겨졌거나 삭제되었을 수 있어요.';$('#shared-comment-form').hidden=true;});}).catch(error=>{if(version===modalVersion)$('#shared-comments').textContent=cloudError(error.code)});
+ $('#shared-comment-form').onsubmit=async e=>{e.preventDefault();const text=new FormData(e.target).get('text').trim();if(!text)return;const form=e.target;if(await communityAction(api=>api.comment(uid,id,text,nickname()),form)){if(version===modalVersion)form.reset();}};
+}
+async function deleteSharedComment(id,commentId){await communityAction(api=>api.deleteComment(currentUser.uid,id,commentId));}
+function renderAdmin(){if(!requireMember())return;if(!isAdmin()){$('#app').innerHTML=head('관리자','관리자 계정만 이용할 수 있어요.');return;}const noticeDraft=document.querySelector('#notice-form input')?.value||'';$('#app').innerHTML=head('커뮤니티 관리','공지를 전하고 게시글 공개 상태를 관리해요.')+communityMessage()+`<h2>공지 관리</h2><form id="notice-form" class="list-item"><label class="field">공지 내용<input name="title" required maxlength="100" placeholder="회원에게 알릴 소식"></label><button class="primary" type="submit">공지 등록</button></form>${newest(community.notices).map(n=>`<div class="list-item"><p>${esc(n.title)}</p><button class="danger" onclick="removeAnnouncement(${jsArg(n.id)})">공지 삭제</button></div>`).join('')}<h2 class="section-title">게시글 관리</h2>${newest(community.items).filter(p=>!p.deleted).map(p=>`<div class="list-item"><div><h3>${esc(p.name)}</h3><p>${esc(p.author)} · ${p.kind==='talk'?'이야기방':'차생활'} · ${p.hidden?'숨김':'공개'}</p><p class="post-note">${esc(p.note)}</p></div><button class="small-btn" onclick="moderate(${jsArg(p.id)})">${p.hidden?'다시 공개':'글 숨기기'}</button></div>`).join('')||'<p class="empty">관리할 게시글이 없어요.</p>'}`;
+ if(noticeDraft)$('#notice-form input').value=noticeDraft;
+ $('#notice-form').onsubmit=async e=>{e.preventDefault();const text=new FormData(e.target).get('title').trim();if(!text)return;const form=e.target;if(await communityAction(api=>api.notice(currentUser.uid,text),form)){document.querySelector('#notice-form')?.reset();toast('공지를 등록했어요.');}};
+}
+async function moderate(id){if(!isAdmin())return;const p=community.items.find(p=>p.id===id);if(p&&await communityAction(api=>api.moderate(currentUser.uid,id,!p.hidden,p.revision)))toast(p.hidden?'다시 공개했어요.':'게시글을 숨겼어요.');}
+async function removeAnnouncement(id){if(isAdmin())await communityAction(api=>api.deleteNotice(currentUser.uid,id));}
+async function toggle(key,id){if(!requireMember()||key!=='saved')return;const next=draftState();next.saved=next.saved.includes(id)?next.saved.filter(x=>x!==id):[...next.saved,id];if(await commitState(next))refreshCommunityView();}
+$('#modal').addEventListener('cancel',()=>{commentStop?.();commentStop=null;modalVersion++;});
+if(isMember())startCommunity();

@@ -4,6 +4,68 @@ service cloud.firestore {
     function owner(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    function admin() {
+      return request.auth != null
+        && request.auth.token.email == 'leegyuhuen@gmail.com'
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function member() { return request.auth != null; }
+    function authorName(name) {
+      return name is string && name.matches('^[가-힣a-zA-Z0-9_]{2,16}$')
+        && name == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.nickname;
+    }
+    function validPost() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['kind','type','name','note','author','authorUid','hidden','deleted','createdAt','updatedAt','revision'])
+        && d.kind in ['record','talk'] && d.type in ['보이차','우롱차','홍차']
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+        && d.note is string && d.note.size() <= 3000
+        && d.author is string && d.authorUid is string
+        && d.hidden is bool && d.deleted is bool
+        && d.createdAt is timestamp && d.updatedAt == request.time
+        && d.revision is int && d.revision >= 0;
+    }
+    match /posts/{id} {
+      allow read: if member() && (resource.data.hidden == false || admin() || owner(resource.data.authorUid));
+      allow create: if member() && validPost() && owner(request.resource.data.authorUid)
+        && authorName(request.resource.data.author) && request.resource.data.hidden == false
+        && request.resource.data.deleted == false && request.resource.data.revision == 0
+        && request.resource.data.createdAt == request.time;
+      allow update: if member() && validPost()
+        && request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.revision == resource.data.revision + 1
+        && resource.data.deleted == false
+        && ((owner(resource.data.authorUid)
+          && ((authorName(request.resource.data.author) && request.resource.data.hidden == resource.data.hidden && request.resource.data.deleted == false)
+            || (request.resource.data.deleted == true && request.resource.data.hidden == true
+              && request.resource.data.author == resource.data.author
+              && request.resource.data.name == '삭제된 게시글' && request.resource.data.note == '')))
+          || (admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden','revision','updatedAt'])));
+      allow delete: if false;
+      match /comments/{commentId} {
+        function visible() { return get(/databases/$(database)/documents/posts/$(id)).data.hidden == false; }
+        allow read: if member() && visible();
+        allow create: if member() && visible()
+          && request.resource.data.keys().hasOnly(['text','author','authorUid','createdAt'])
+          && owner(request.resource.data.authorUid) && authorName(request.resource.data.author)
+          && request.resource.data.text is string && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500 && request.resource.data.createdAt == request.time;
+        allow delete: if member() && (owner(resource.data.authorUid) || admin());
+        allow update: if false;
+      }
+    }
+    match /announcements/{id} {
+      allow read: if member();
+      allow create: if admin()
+        && request.resource.data.keys().hasOnly(['title','authorUid','createdAt'])
+        && owner(request.resource.data.authorUid)
+        && request.resource.data.title is string && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100 && request.resource.data.createdAt == request.time;
+      allow delete: if admin();
+      allow update: if false;
+    }
     function validData() {
       let d = request.resource.data;
       return d.keys().hasAll(['schema', 'nickname', 'payload', 'revision', 'updatedAt'])

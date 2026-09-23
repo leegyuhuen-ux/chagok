@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test:ui": "node tests/cloud-ui.cjs",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-chagok \"node tests/cloud-store.cjs\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-chagok \"node tests/run-rules.cjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "5.0.2",

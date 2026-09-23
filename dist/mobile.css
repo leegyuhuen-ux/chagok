@@ -109,3 +109,32 @@ footer{gap:16px;flex-wrap:wrap}
  dialog{max-height:calc(100dvh - 16px);margin:8px auto;padding:16px 20px}
  .side-note{display:none}
 }
+
+/* Pilot community: wrap long member text and keep every control within the viewport. */
+[hidden]{display:none!important}
+.post-note{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+.card,.list-item>div,.list-item>.field{min-width:0}
+.card h2,.list-item h3,.meta,.notice,.comment{overflow-wrap:anywhere}
+.list-item>.field{flex:1;margin:0}
+.list-item>button{flex-shrink:0}
+.section-title{margin:28px 0 15px}
+#shared-comments{max-height:40dvh;overflow-y:auto;margin-bottom:18px}
+#shared-comments .comment p{margin:8px 0}
+#notice-form{align-items:end}
+@media(max-width:720px){
+ .list-item{flex-wrap:wrap}
+ .list-item>div,.list-item>.field{flex-basis:100%}
+ .page-heading>.primary{width:100%}
+ .modal-head h2{overflow-wrap:anywhere;min-width:0}
+ .modal-head button{flex-shrink:0}
+ .card-actions button{min-height:44px}
+}
+.list-item>button{align-self:center}
+@media(max-width:720px){
+ #notice-form{align-items:stretch}
+ .list-item>.field{width:100%;flex-basis:auto}
+ .side-bottom>button[data-page]{white-space:nowrap;max-width:none}
+}
+@media(max-width:360px){.brand small{display:none}}
+.tea-chip{width:max-content;max-width:100%;align-self:flex-start}
+.brand small{word-break:keep-all;line-height:1.6}

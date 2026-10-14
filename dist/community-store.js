@@ -10,6 +10,12 @@
     }
     function writePhotos(writer,ref,photos){const media=sdk.doc(ref,'media','photos');if(photos.length)writer.set(media,{photos});else writer.delete(media);}
     return {
+      async report(uid,id,reason){
+        check(uid);const ref=sdk.doc(db,'posts',id,'reports',uid);
+        await sdk.runTransaction(db,async tx=>{const old=await tx.get(ref);check(uid);if(old.exists())throw Object.assign(new Error('Already reported'),{code:'app/already-reported'});tx.set(ref,{reason,reporterUid:uid,createdAt:sdk.serverTimestamp(),status:'open'});});check(uid);
+      },
+      watchReports(uid,onData,onError){check(uid);return sdk.onSnapshot(sdk.query(sdk.collectionGroup(db,'reports'),sdk.where('status','==','open')),s=>{if(uid===getUid())onData(s.docs.map(d=>({...d.data(),id:d.id,postId:d.ref.parent.parent.id})))},onError)},
+      async resolveReport(uid,postId,reporterUid){check(uid);await sdk.updateDoc(sdk.doc(db,'posts',postId,'reports',reporterUid),{status:'resolved'});check(uid)},
       watch(uid,admin,onData,onError){
         check(uid);
         const q=admin?sdk.collection(db,'posts'):sdk.query(sdk.collection(db,'posts'),sdk.where('hidden','==',false));

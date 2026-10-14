@@ -21,6 +21,42 @@
       return {state:cleanState({...JSON.parse(value.payload),nickname:value.nickname}),revision:value.revision};
     }
     return {
+      async loadRecordAssets(uid,record){
+        own(uid);let photos=[],post=null;
+        if(record.photoCount){const media=await sdk.getDocFromServer(sdk.doc(db,'users',uid,'recordMedia',record.id));own(uid);if(!media.exists())throw fault('app/invalid-data');photos=media.data().photos;}
+        if(record.sharedPostId){const snapshot=await sdk.getDocFromServer(sdk.doc(db,'posts',record.sharedPostId));own(uid);if(snapshot.exists())post=snapshot.data();}
+        return {photos,postRevision:post?.revision??null,postHidden:post?.hidden||false,postDeleted:post?.deleted||false};
+      },
+      async saveRecord(uid,input,expectedRevision,change){
+        own(uid);const photos=change.photos||[];
+        if(!Array.isArray(photos)||photos.length>3||photos.some(p=>typeof p!=='string'||p.length>200000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(p)))throw fault('app/photos-invalid');
+        const next=cleanState(input),userRef=sdk.doc(db,'users',uid),newPostRef=sdk.doc(sdk.collection(db,'posts'));
+        const result=await sdk.runTransaction(db,async tx=>{
+          const user=await tx.get(userRef);own(uid);if(!user.exists()||user.data().revision!==expectedRevision)throw fault('app/conflict');
+          const previous=decode(user).state.records.find(r=>r.id===change.recordId);
+          const oldRef=previous?.sharedPostId?sdk.doc(db,'posts',previous.sharedPostId):null;
+          const oldSnapshot=oldRef?await tx.get(oldRef):null;own(uid);
+          const oldPost=oldSnapshot?.exists()?oldSnapshot.data():null;
+          if(oldRef&&(oldPost?.revision??null)!==change.postRevision)throw fault('app/conflict');
+          if(oldPost&&oldPost.authorUid!==uid)throw fault('permission-denied');
+          const record=next.records.find(r=>r.id===change.recordId),revision=expectedRevision+1;
+          const mediaRef=sdk.doc(db,'users',uid,'recordMedia',change.recordId);
+          if(record){record.photoCount=photos.length;if(photos.length)tx.set(mediaRef,{photos});else tx.delete(mediaRef);}else tx.delete(mediaRef);
+          const publish=!!record&&change.publish===true;
+          if(publish){
+            const ref=oldPost&&!oldPost.deleted?oldRef:newPostRef;
+            const keep=ref===oldRef?oldPost:null;
+            record.visibility='public';record.sharedPostId=ref.id;
+            tx.set(ref,{kind:'record',type:record.type,name:record.name,note:record.note||'',author:next.nickname,authorUid:uid,photoCount:photos.length,
+              hidden:keep?.hidden||false,deleted:false,createdAt:keep?.createdAt||sdk.serverTimestamp(),updatedAt:sdk.serverTimestamp(),revision:keep?keep.revision+1:0});
+            const publicMedia=sdk.doc(ref,'media','photos');if(photos.length)tx.set(publicMedia,{photos});else if(keep)tx.delete(publicMedia);
+          }else{
+            if(record){record.visibility='private';delete record.sharedPostId;}
+            if(oldPost&&!oldPost.deleted){tx.update(oldRef,{name:'삭제된 게시글',note:'',photoCount:0,hidden:true,deleted:true,revision:oldPost.revision+1,updatedAt:sdk.serverTimestamp()});tx.delete(sdk.doc(oldRef,'media','photos'));}
+          }
+          tx.set(userRef,encode(next,revision));return {state:next,revision};
+        });own(uid);return result;
+      },
       async load(uid,seed={}){
         own(uid);const ref=sdk.doc(db,'users',uid);
         const snapshot=await sdk.getDocFromServer(ref);own(uid);

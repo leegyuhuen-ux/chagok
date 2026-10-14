@@ -85,7 +85,20 @@ service cloud.firestore {
         allow delete: if member() && (owner(resource.data.authorUid) || admin());
         allow update: if false;
       }
+      match /reports/{uid} {
+        allow get: if owner(uid) || admin();
+        allow create: if owner(uid)
+          && get(/databases/$(database)/documents/posts/$(id)).data.hidden == false
+          && get(/databases/$(database)/documents/posts/$(id)).data.authorUid != uid
+          && request.resource.data.keys().hasOnly(['reason','reporterUid','createdAt','status'])
+          && request.resource.data.reporterUid == uid
+          && request.resource.data.reason in ['주제와 무관한 글','광고·도배','욕설·괴롭힘','개인정보 노출','기타']
+          && request.resource.data.status == 'open' && request.resource.data.createdAt == request.time;
+        allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status == 'resolved';
+      }
     }
+    match /{path=**}/reports/{reportId} { allow list: if admin(); }
     match /announcements/{id} {
       allow read: if member();
       allow create: if admin()
@@ -127,6 +140,11 @@ service cloud.firestore {
         && d.updatedAt == request.time;
     }
     match /users/{uid} {
+      match /recordMedia/{id} {
+        allow read, delete: if owner(uid);
+        allow create, update: if owner(uid) && request.resource.data.keys().hasOnly(['photos'])
+          && validPhotos(request.resource.data.photos);
+      }
       allow get: if owner(uid);
       allow list: if false;
       allow create: if owner(uid) && validData() && request.resource.data.revision == 0;

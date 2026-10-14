@@ -168,6 +168,17 @@ footer{gap:16px;flex-wrap:wrap}
 .event-card dt{color:var(--muted)}.event-card dd{margin:0;overflow-wrap:anywhere}
 .event-badge{display:inline-block;border-radius:20px;padding:5px 12px;font-size:13px;background:#eaf0e3;color:#344e3f}
 .event-badge.draft{background:#efede8;color:#665f52}.event-badge.cancelled{background:#f7e8e6;color:#923e3e}
+.visibility-choice{border:0;padding:0;margin:20px 0 8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.visibility-choice legend{font-size:14px;padding:0;margin-bottom:10px}
+.visibility-choice label{position:relative;display:flex;min-width:0;cursor:pointer}
+.visibility-choice input{position:absolute;width:16px;height:16px;margin:0;left:12px;top:50%;transform:translateY(-50%);accent-color:#284a3a}
+.visibility-choice span{display:flex;align-items:center;width:100%;border:1px solid var(--line);border-radius:8px;padding:14px 10px 14px 36px;font-size:14px;min-height:56px}
+.visibility-choice input:checked+span{background:#e7efdf;border-color:#456c50;color:#243e2c;font-weight:700}
+.visibility-choice input:focus-visible+span{outline:2px solid #456c50;outline-offset:3px}
+.photo-upload-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;font-size:14px}
+.photo-add{min-height:44px;border:1px solid #456c50;padding:10px 16px;color:#284a3a;background:#f4f7f0}
+#record-photo-editor{padding:0 0 8px;border-bottom:1px solid var(--line)}
+@media(max-width:380px){#record-form .form-actions button{flex:1 1 42%;white-space:nowrap}#record-save{flex-basis:100%!important}.visibility-choice{gap:8px}.visibility-choice span{font-size:13px}}
 .card-actions button,.photo-thumb{touch-action:manipulation}
 @media(max-width:1100px){.event-list{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:720px){
@@ -177,3 +188,5 @@ footer{gap:16px;flex-wrap:wrap}
  .photo-viewer{width:calc(100% - 24px);padding:16px}
  .field input[type=datetime-local]{width:100%;min-width:0;max-width:100%}
 }
+/* Community controls remain usable with long text and narrow screens. */
+.search-bar{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}.search-bar input{flex:1;min-width:140px;border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:#fff;font:inherit;color:inherit}.search-bar button{min-height:44px}.result-count{text-align:center;margin:20px 0}.load-more{display:block;margin:16px auto;min-height:44px}.report-actions{display:flex;gap:8px;flex-wrap:wrap}.report-section{margin-top:32px}.guide-content p{line-height:1.8;overflow-wrap:anywhere}.guide-content h3{margin-top:24px}.skip-link{position:fixed;left:16px;top:-100px;background:#243931;color:#fff;padding:12px;z-index:1000}.skip-link:focus{top:12px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #627d61;outline-offset:3px}.post-note{overflow-wrap:anywhere}.card h2,.list-item h3{overflow-wrap:anywhere}footer .text-button{min-height:44px}#app:focus{outline:none}

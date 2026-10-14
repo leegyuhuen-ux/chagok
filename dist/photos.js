@@ -21,7 +21,8 @@ const ChagokPhotos=(()=>{
  function editor(container,initial=[],onBusy=()=>{}){
   let photos=initial.filter(valid).slice(0,3),busy=false,message='';
   function render(){
-   container.innerHTML=`<label class="field">사진 첨부 (${photos.length}/3)<input type="file" accept="image/jpeg,image/png,image/webp" multiple ${busy||photos.length===3?'disabled':''} aria-describedby="photo-help"></label><p id="photo-help" class="sub">최대 3장 · JPG, PNG, WebP · 한 장 15MB 이하<br>사진은 자동으로 크기를 줄여 저장해요.</p><div class="photo-previews">${photos.map((src,i)=>`<figure><img src="${src}" alt="첨부 사진 ${i+1}"><button type="button" class="small-btn" data-remove="${i}" ${busy?'disabled':''}>사진 ${i+1} 삭제</button></figure>`).join('')}</div><p class="photo-status ${message?'form-error':''}" role="status">${busy?'사진을 준비하고 있어요…':message}</p>`;
+   container.innerHTML=`<div class="photo-upload-heading"><span>사진 첨부 (${photos.length}/3)</span><button type="button" class="small-btn photo-add" data-add-photo ${busy||photos.length===3?'disabled':''}>＋ 사진 추가</button><input hidden type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="사진 파일 선택"></div><p id="photo-help" class="sub">최대 3장 · JPG, PNG, WebP · 한 장 15MB 이하<br>사진은 자동으로 크기를 줄여 저장해요.</p><div class="photo-previews">${photos.map((src,i)=>`<figure><img src="${src}" alt="첨부 사진 ${i+1}"><button type="button" class="small-btn" data-remove="${i}" ${busy?'disabled':''}>사진 ${i+1} 삭제</button></figure>`).join('')}</div><p class="photo-status ${message?'form-error':''}" role="status">${busy?'사진을 준비하고 있어요…':message}</p>`;
+   container.querySelector('[data-add-photo]').onclick=()=>container.querySelector('input').click();
    container.querySelector('input').onchange=async e=>{
     const files=Array.from(e.target.files||[]);if(!files.length)return;
     if(files.length+photos.length>3){message='사진은 최대 3장까지 첨부할 수 있어요.';render();return;}

@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const elements=new Map();function el(s){if(!elements.has(s))elements.set(s,{innerHTML:'',textContent:'',open:false,remove(){},classList:{add(){},remove(){},toggle(){}},addEventListener(){},showModal(){this.open=true},close(){this.open=false},insertAdjacentHTML(){},getBoundingClientRect(){return {left:0,right:500,top:0,bottom:600}}});return elements.get(s)}
 const storage={};const context={console,Date,Math,Set,Map,JSON,String,Number,Object,Array,RegExp,Error,crypto:require('crypto').webcrypto,innerWidth:1400,setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:k=>storage[k],setItem:(k,v)=>storage[k]=v},document:{querySelector:el,querySelectorAll:()=>[]}};
 vm.createContext(context);vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../dist/app.js'),'utf8'),context);
-for(const file of ['photos.js','community.js','events.js'])vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../dist/'+file),'utf8'),context);
+for(const file of ['photos.js','community.js','events.js','records.js','operations.js'])vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../dist/'+file),'utf8'),context);
 const run=s=>vm.runInContext(s,context);
 
 (async()=>{
@@ -11,7 +11,8 @@ await assert.rejects(()=>run("ChagokPhotos.compress({type:'image/gif',size:10})"
 await assert.rejects(()=>run("ChagokPhotos.compress({type:'image/jpeg',size:16*1024*1024})"),/15MB/);
 let docs={},failLoad=false,failSave=false,holdSave=null;
 const store={async load(uid,seed){if(failLoad)throw {code:'permission-denied'};if(!docs[uid])docs[uid]={state:{...JSON.parse(run('JSON.stringify(defaults)')),...seed},revision:0};return structuredClone(docs[uid])},async save(uid,next,rev){if(holdSave)await holdSave;if(failSave)throw {code:'unavailable'};if(docs[uid].revision!==rev)throw {code:'app/conflict'};docs[uid]={state:structuredClone(next),revision:rev+1};return structuredClone(docs[uid])}};
-context.chagokAuth={ready:true,configured:true,user:{uid:'alice'},getStore:async()=>store,getCommunity:async()=>({watch(uid,admin,cb){cb([]);return ()=>{}},watchNotices(uid,cb){cb([]);return ()=>{}},watchEvents(uid,admin,cb){cb([]);return ()=>{}}})};
+store.saveRecord=(uid,next,rev)=>store.save(uid,next,rev);
+context.chagokAuth={ready:true,configured:true,user:{uid:'alice'},getStore:async()=>store,getCommunity:async()=>({watch(uid,admin,cb){cb([]);return ()=>{}},watchNotices(uid,cb){cb([]);return ()=>{}},watchEvents(uid,admin,cb){cb([]);return ()=>{}},watchReports(uid,cb){cb([]);return ()=>{}}})};
 storage['chagok-user-alice']=JSON.stringify({nickname:'차벗',records:[{id:'one',name:'내 차',date:'2026-09-22',type:'홍차',visibility:'private'}]});
 run('updateAuthUI()');assert(el('#app').innerHTML.includes('불러와요'));await tick();assert(run('isMember()'));assert.equal(run('state.records.length'),1);
 failSave=true;await run("confirmDelete('one')");assert.equal(run('state.records.length'),1);assert(el('#toast').textContent.includes('서버'));failSave=false;
@@ -28,6 +29,13 @@ assert.equal(await run("saveNickname('두번째차벗','bob')"),true);
 let release;holdSave=new Promise(r=>release=r);const pending=run("commitState({...state,nickname:'늦은저장'})");await tick();context.chagokAuth.user={uid:'alice'};run('updateAuthUI()');await tick();release();await pending;assert.equal(run('currentUser.uid'),'alice');assert.equal(run('nickname()'),'새차벗');
 run("community.phase='ready';community.items=[{id:'shared',kind:'talk',type:'홍차',name:'<script>alert(1)</script>',note:'긴 내용',author:'다른차벗',authorUid:'bob',hidden:false,deleted:false,revision:0}];state.saved=['shared'];filter='저장한 기록';renderFeed()");
 assert(el('#app').innerHTML.includes('&lt;script&gt;'));assert(!el('#app').innerHTML.includes('<script>'));assert(el('#app').innerHTML.includes('다른차벗'));assert(!el('#app').innerHTML.includes('askDeletePost'));
+assert(el('#app').innerHTML.includes('reportPost'));
+assert.equal((el('#app').innerHTML.match(/id="post-search"/g)||[]).length,1);
+run("searchTerm='찾을수없는글';renderFeed()");assert(!el('#app').innerHTML.includes('다른차벗'));assert(el('#app').innerHTML.includes('0개의 글'));
+run("searchTerm='';community.items=Array.from({length:30},(_,i)=>({id:'p'+i,kind:'talk',type:'우롱차',name:'차 이야기 '+i,note:'기록',author:'다른차벗',authorUid:'bob'}));renderTalk()");
+assert.equal((el('#app').innerHTML.match(/<article /g)||[]).length,24);assert(el('#app').innerHTML.includes('글 더 보기'));
+run('feedLimit+=24;renderTalk()');assert.equal((el('#app').innerHTML.match(/<article /g)||[]).length,30);
+run("searchTerm='차 이야기 29';renderTalk()");assert.equal((el('#app').innerHTML.match(/<article /g)||[]).length,1);run("searchTerm='';feedLimit=24");
 run("go('admin')");assert.notEqual(run('page'),'admin');
 assert.equal(el('#admin-slot').innerHTML,'');
 run("community.eventsPhase='ready';community.events=[{id:'event1',title:'공개 이벤트',description:'안내',venue:'서울',status:'published',startsAt:{seconds:1800000000},endsAt:{seconds:1800003600}},{id:'draft1',title:'비공개초안',description:'내용',venue:'서울',status:'draft',startsAt:{seconds:1800000000},endsAt:{seconds:1800003600}}];go('events')");

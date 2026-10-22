@@ -15,13 +15,13 @@ store.saveRecord=(uid,next,rev)=>store.save(uid,next,rev);
 context.chagokAuth={ready:true,configured:true,user:{uid:'alice'},getStore:async()=>store,getCommunity:async()=>({watch(uid,admin,cb){cb([]);return ()=>{}},watchNotices(uid,cb){cb([]);return ()=>{}},watchEvents(uid,admin,cb){cb([]);return ()=>{}},watchReports(uid,cb){cb([]);return ()=>{}}})};
 storage['chagok-user-alice']=JSON.stringify({nickname:'차벗',records:[{id:'one',name:'내 차',date:'2026-09-22',type:'홍차',visibility:'private'}]});
 run('updateAuthUI()');assert(el('#app').innerHTML.includes('불러와요'));await tick();assert(run('isMember()'));assert.equal(run('state.records.length'),1);
-failSave=true;await run("confirmDelete('one')");assert.equal(run('state.records.length'),1);assert(el('#toast').textContent.includes('서버'));failSave=false;
+failSave=true;await run("confirmDelete('one')");assert.equal(run('state.records.length'),1);assert(el('#toast').textContent.includes('인터넷'));failSave=false;
 await run("confirmDelete('one')");assert.equal(run('state.records.length'),0);assert.equal(docs.alice.state.records.length,0);
 assert.equal(await run("saveNickname('새차벗','alice')"),true);assert.equal(docs.alice.state.nickname,'새차벗');
 context.chagokAuth.user=null;run('updateAuthUI()');assert(!run('isMember()'));assert(!el('#app').innerHTML.includes('calendar-box'));
 // A new login restores the server state, despite the unchanged old local copy.
 context.chagokAuth.user={uid:'alice'};run('updateAuthUI()');await tick();assert.equal(run('nickname()'),'새차벗');assert.equal(run('state.records.length'),0);
-assert.equal(await run('verifyServerData()'),true);docs.alice.revision++;assert.equal(await run('verifyServerData()'),false);assert.equal(await run("commitState({...state,nickname:'덮어쓰기'})"),false);assert.equal(run('nickname()'),'새차벗');assert.equal(run('cloud.error'),'app/conflict');
+docs.alice.revision++;assert.equal(await run("commitState({...state,nickname:'덮어쓰기'})"),false);assert.equal(run('nickname()'),'새차벗');assert.equal(run('cloud.error'),'app/conflict');await tick();await tick();assert.equal(run('cloud.revision'),docs.alice.revision);assert.equal(run('cloud.error'),null);const before=docs.alice.revision;assert.equal(await run("commitState({...state,nickname:'새차벗'})"),true);assert.equal(docs.alice.revision,before+1);
 await run('loadAccount()');assert.equal(run('cloud.revision'),docs.alice.revision);
 failLoad=true;context.chagokAuth.user={uid:'bob'};run('updateAuthUI()');await tick();assert(!run('isMember()'));assert(el('#app').innerHTML.includes('불러오지 못했어요'));assert(!el('#app').innerHTML.includes('nickname-form'));failLoad=false;
 await run('loadAccount()');assert(el('#app').innerHTML.includes('nickname-form'));

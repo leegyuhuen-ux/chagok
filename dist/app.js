@@ -50,6 +50,7 @@ function renderGate(){
  const a=globalThis.chagokAuth;
  const loading=a?.configured&&!a.ready;
  $('#breadcrumb').textContent='차곡 by 바라티';
+ if(loading&&returningMember()){renderOpening();return;}
  if(currentUser&&a?.ready&&!a.error){if(cloud.phase!=='ready'){showCloudGate();return;}renderNicknameSetup();return;}
  $('#app').innerHTML=`<section class="access-card"><div class="eyebrow">차곡 by 바라티</div><h1>차 한 잔의 기록,<br>함께 나누는 차생활.</h1><p>보이차 · 우롱차 · 홍차</p><ul class="intro-list"><li><b>내 차생활</b><span>마신 차와 감상을 캘린더에 차곡차곡 남겨요.</span></li><li><b>둘러보기 · 이야기방</b><span>회원들의 찻자리를 구경하고 궁금한 점을 나눠요.</span></li><li><b>이벤트</b><span>함께 차를 나누는 모임 소식을 받아요.</span></li></ul><p class="sub">차생활 기록과 커뮤니티는 로그인 후 이용할 수 있어요. 기록은 기본적으로 나만 보기로 저장돼요.</p><button class="primary" ${loading?'disabled':''} onclick="startGoogleLogin()">${loading?'로그인 상태 확인 중…':'Google 계정으로 시작하기'}</button>${a?.error?`<p class="form-error" role="alert">${esc(authMessage(a.error))}</p>`:''}<p class="legal-links"><a href="terms.html">이용약관</a> · <a href="privacy.html">개인정보처리방침</a></p></section>`;
 }
@@ -95,6 +96,7 @@ async function commitState(next,recordChange=null){
 function draftState(){return JSON.parse(JSON.stringify(state))}
 function showCloudGate(){
  const loading=cloud.phase==='loading';
+ if(loading&&returningMember()){renderOpening();return;}
  $('#app').innerHTML=`<section class="access-card"><div class="eyebrow">차곡 by 바라티</div><h1>${loading?'내 찻자리를 불러와요':'내 정보를 불러오지 못했어요'}</h1><p class="sub">${loading?'닉네임과 차 기록을 불러오고 있어요.':esc(cloudError(cloud.error))}</p>${loading?'':'<button class="primary" onclick="loadAccount()">다시 불러오기</button>'}<button class="text-button" onclick="logoutGoogle()">로그아웃</button></section>`;
 }
 async function saveNickname(value,uid){
@@ -119,7 +121,7 @@ function updateAuthUI(){
  $('#profile small').textContent=user?'내 계정 · 설정':'Google로 시작하기';
  document.body?.classList.toggle('membership-locked',!isMember());updateSyncStatus();
  if(user&&a?.ready&&!a.error&&(changed||cloud.uid!==user.uid)){void loadAccount();return;}
- if(isMember()){go(page);globalThis.startCommunity?.();}else renderGate();
+ if(isMember()){rememberMember(true);go(page);globalThis.startCommunity?.();}else{if(a?.ready&&!user)rememberMember(false);renderGate();}
 }
 async function refreshAccount(uid,generation){
  // After a revision conflict, pull the latest account data so the next save succeeds.
@@ -128,3 +130,7 @@ async function refreshAccount(uid,generation){
   state={...JSON.parse(JSON.stringify(defaults)),...result.state};cloud={uid,phase:'ready',revision:result.revision,error:null};updateSyncStatus();
  }catch{}
 }
+// Members who were signed in last time see a quiet opening screen on reload instead of the landing page.
+function returningMember(){try{return localStorage.getItem('chagok-signed-in')==='1'}catch{return false}}
+function rememberMember(on){try{on?localStorage.setItem('chagok-signed-in','1'):localStorage.removeItem('chagok-signed-in')}catch{}}
+function renderOpening(){$('#app').innerHTML='<div class="app-opening" role="status"><span class="seal">茶</span><p>차곡을 여는 중…</p></div>';}

@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const elements=new Map();function el(s){if(!elements.has(s))elements.set(s,{innerHTML:'',textContent:'',open:false,remove(){},classList:{add(){},remove(){},toggle(){}},addEventListener(){},showModal(){this.open=true},close(){this.open=false},insertAdjacentHTML(){},getBoundingClientRect(){return {left:0,right:500,top:0,bottom:600}}});return elements.get(s)}
-const storage={};const context={console,Date,Math,Set,Map,JSON,String,Number,Object,Array,RegExp,Error,crypto:require('crypto').webcrypto,innerWidth:1400,setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:k=>storage[k],setItem:(k,v)=>storage[k]=v},document:{querySelector:el,querySelectorAll:()=>[]}};
+const storage={};const context={console,Date,Math,Set,Map,JSON,String,Number,Object,Array,RegExp,Error,crypto:require('crypto').webcrypto,innerWidth:1400,setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:k=>storage[k],setItem:(k,v)=>storage[k]=v,removeItem:k=>delete storage[k]},document:{querySelector:el,querySelectorAll:()=>[]}};
 vm.createContext(context);vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../dist/app.js'),'utf8'),context);
 for(const file of ['photos.js','community.js','events.js','records.js','operations.js','members.js'])vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../dist/'+file),'utf8'),context);
 const run=s=>vm.runInContext(s,context);
@@ -46,8 +46,9 @@ run("filter='전체';go('feed')");assert(el('#app').innerHTML.indexOf('우롱차
 run('go("admin")');assert(el('#app').innerHTML.includes('작성자 이용 제한'));run("community.bans=[{id:'bob',nickname:'다른차벗',reason:'광고'}];renderAdmin()");assert(!el('#app').innerHTML.includes('작성자 이용 제한'));
 run("community.ban={reason:'광고'}");assert(run("cloudError('permission-denied')").includes('제한'));run('community.ban=null');assert(!run("cloudError('permission-denied')").includes('제한'));
 run('showProfile()');assert(el('#modal-body').innerHTML.includes('회원 탈퇴'));run('askWithdraw()');assert(el('#modal-body').innerHTML.includes('Google 계정 확인 후 탈퇴'));run('closeModal()');
+assert.equal(storage['chagok-signed-in'],'1');run('chagokAuth.ready=false;renderGate()');assert(el('#app').innerHTML.includes('차곡을 여는 중'));run('chagokAuth.ready=true;updateAuthUI()');
 console.log('PASS member tools UI: admin ban controls, banned-member error message, withdrawal entry point.');
-context.chagokAuth.user=null;run('updateAuthUI()');assert.equal(run('community.items.length'),0);assert.equal(run('community.notices.length'),0);assert.equal(el('#admin-slot').innerHTML,'');assert.equal(run('photoCache.size'),0);
+context.chagokAuth.user=null;run('updateAuthUI()');assert.equal(run('community.items.length'),0);assert.equal(storage['chagok-signed-in'],undefined);run('renderGate()');assert(el('#app').innerHTML.includes('Google 계정으로 시작하기'));assert.equal(run('community.notices.length'),0);assert.equal(el('#admin-slot').innerHTML,'');assert.equal(run('photoCache.size'),0);
 console.log('PASS shared UI: saved stories, escaped member content, ownership controls, admin-only navigation, logout clears shared data.');
 console.log('PASS photos/events UI: administrator menu absent for members, private event drafts, event controls, tab order, invalid photo inputs, photo cache reset.');
 console.log('PASS UI: load-before-access, local migration, server restore, failed save does not delete data, confirmed delete, nickname cloud save, stale conflict, load-error gate, logout, cross-account late response.');

@@ -57,6 +57,11 @@
           tx.set(userRef,encode(next,revision));return {state:next,revision};
         });own(uid);return result;
       },
+      async deleteAccount(uid){
+        own(uid);const media=await sdk.getDocs(sdk.collection(db,'users',uid,'recordMedia'));own(uid);
+        for(const item of media.docs){await sdk.deleteDoc(item.ref);own(uid);}
+        await sdk.deleteDoc(sdk.doc(db,'users',uid));own(uid);
+      },
       async load(uid,seed={}){
         own(uid);const ref=sdk.doc(db,'users',uid);
         const snapshot=await sdk.getDocFromServer(ref);own(uid);

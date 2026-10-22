@@ -11,6 +11,7 @@ service cloud.firestore {
         && request.auth.token.firebase.sign_in_provider == 'google.com';
     }
     function member() { return request.auth != null; }
+    function banned() { return exists(/databases/$(database)/documents/bans/$(request.auth.uid)); }
     function authorName(name) {
       return name is string && name.matches('^[가-힣a-zA-Z0-9_]{2,16}$')
         && name == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.nickname;
@@ -41,7 +42,7 @@ service cloud.firestore {
     }
     match /posts/{id} {
       allow read: if member() && (resource.data.hidden == false || admin() || owner(resource.data.authorUid));
-      allow create: if member() && validPost(id) && owner(request.resource.data.authorUid)
+      allow create: if member() && !banned() && validPost(id) && owner(request.resource.data.authorUid)
         && authorName(request.resource.data.author) && request.resource.data.hidden == false
         && request.resource.data.deleted == false && request.resource.data.revision == 0
         && request.resource.data.createdAt == request.time;
@@ -51,7 +52,7 @@ service cloud.firestore {
         && request.resource.data.revision == resource.data.revision + 1
         && resource.data.deleted == false
         && ((owner(resource.data.authorUid)
-          && ((authorName(request.resource.data.author) && request.resource.data.hidden == resource.data.hidden && request.resource.data.deleted == false)
+          && ((!banned() && authorName(request.resource.data.author) && request.resource.data.hidden == resource.data.hidden && request.resource.data.deleted == false)
             || (request.resource.data.deleted == true && request.resource.data.hidden == true
               && request.resource.data.author == resource.data.author
               && request.resource.data.get('photoCount', 0) == 0
@@ -77,7 +78,7 @@ service cloud.firestore {
       match /comments/{commentId} {
         function visible() { return get(/databases/$(database)/documents/posts/$(id)).data.hidden == false; }
         allow read: if member() && visible();
-        allow create: if member() && visible()
+        allow create: if member() && !banned() && visible()
           && request.resource.data.keys().hasOnly(['text','author','authorUid','createdAt'])
           && owner(request.resource.data.authorUid) && authorName(request.resource.data.author)
           && request.resource.data.text is string && request.resource.data.text.size() > 0
@@ -87,7 +88,7 @@ service cloud.firestore {
       }
       match /reports/{uid} {
         allow get: if owner(uid) || admin();
-        allow create: if owner(uid)
+        allow create: if owner(uid) && !banned()
           && get(/databases/$(database)/documents/posts/$(id)).data.hidden == false
           && get(/databases/$(database)/documents/posts/$(id)).data.authorUid != uid
           && request.resource.data.keys().hasOnly(['reason','reporterUid','createdAt','status'])
@@ -99,6 +100,18 @@ service cloud.firestore {
       }
     }
     match /{path=**}/reports/{reportId} { allow list: if admin(); }
+    // Lets a withdrawing member find and remove their own comments.
+    match /{path=**}/comments/{commentId} { allow list: if member() && resource.data.authorUid == request.auth.uid; }
+    match /bans/{uid} {
+      allow get: if owner(uid) || admin();
+      allow list, delete: if admin();
+      allow create: if admin() && uid != request.auth.uid
+        && request.resource.data.keys().hasOnly(['nickname','reason','createdAt'])
+        && request.resource.data.nickname is string && request.resource.data.nickname.size() <= 16
+        && request.resource.data.reason is string && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 200 && request.resource.data.createdAt == request.time;
+      allow update: if false;
+    }
     match /announcements/{id} {
       allow read: if member();
       allow create: if admin()
@@ -150,7 +163,7 @@ service cloud.firestore {
       allow create: if owner(uid) && validData() && request.resource.data.revision == 0;
       allow update: if owner(uid) && validData()
         && request.resource.data.revision == resource.data.revision + 1;
-      allow delete: if false;
+      allow delete: if owner(uid);
     }
     match /{document=**} { allow read, write: if false; }
   }

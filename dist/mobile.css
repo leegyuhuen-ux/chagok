@@ -205,3 +205,6 @@ footer{align-items:center;flex-wrap:wrap;gap:8px 16px}.footer-copy{margin:0}.foo
 .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;margin-bottom:18px}.profile-stats div{padding:14px 8px;text-align:center}.profile-stats div+div{border-left:1px solid var(--line)}.profile-stats strong{display:block;font-size:22px;font-weight:600}.profile-stats span{font-size:12px;color:var(--muted)}
 .profile-menu{display:grid;border-top:1px solid var(--line)}.profile-menu button{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:15px 4px;min-height:48px;border-bottom:1px solid var(--line);font-size:15px}.profile-menu button span{color:var(--muted);font-size:20px}
 .profile-logout{display:block;width:100%;margin-top:18px;min-height:44px;font-size:14px}
+
+/* Reload for returning members: quiet opening instead of the landing page. */
+.app-opening{min-height:60vh;display:grid;place-content:center;justify-items:center;gap:14px;color:var(--muted);font-size:14px}.app-opening .seal{animation:opening 1.4s ease-in-out infinite}@keyframes opening{50%{opacity:.35}}@media(prefers-reduced-motion:reduce){.app-opening .seal{animation:none}}

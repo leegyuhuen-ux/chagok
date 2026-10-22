@@ -67,3 +67,17 @@ Cloudflare를 쓰면 프록시(주황 구름)를 끄고 ‘DNS only’로 둡니
 3. 두 번째 계정으로 글·댓글·신고 → 관리자 계정에서 신고 확인, 이용 제한·해제
 4. 테스트 계정으로 회원 탈퇴 → 글·댓글이 사라졌는지 확인
 5. 휴대폰에서 첫 화면, 이용약관, 개인정보처리방침 확인
+
+## 9. 봇·도배 방지 (Firebase App Check)
+
+코드는 준비되어 있고, 사이트 키를 넣으면 켜집니다.
+
+1. Google Cloud 콘솔(프로젝트 chagok1-173f9) → 보안 → reCAPTCHA → 키 만들기
+   - 애플리케이션 유형: 웹, 도메인: `chagokchacha.com`, `www.chagokchacha.com`
+   - 만든 키의 ID(사이트 키)를 복사합니다. 공개용 값이라 공유해도 안전합니다.
+2. Firebase 콘솔 → App Check → 앱 → 웹 앱 → reCAPTCHA Enterprise로 등록 → 위 사이트 키 입력
+3. `dist/firebase-config.js`의 `CHAGOK_APP_CHECK_KEY`에 사이트 키를 넣고 배포합니다.
+4. 1~2일 뒤 Firebase 콘솔 → App Check → API → Cloud Firestore의 ‘확인된 요청’ 비율이 거의 100%인지 확인합니다.
+5. Cloud Firestore → **적용(Enforce)**을 누릅니다. 이때부터 사이트를 거치지 않은 요청(봇·스크립트)은 거부됩니다.
+
+4단계 전에 적용하면 아직 새 코드를 받지 않은 회원의 요청이 막힐 수 있습니다.

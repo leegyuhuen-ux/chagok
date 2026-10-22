@@ -26,6 +26,15 @@
     async signOut() {
       if (!auth) throw {code:'app/not-ready'};
       await sdk.signOut(auth);
+    },
+    // Account deletion needs a fresh sign-in; call from a user gesture like signIn.
+    reauthenticate() {
+      if (!auth?.currentUser) return Promise.reject({code:'app/not-ready'});
+      return sdk.reauthenticateWithPopup(auth.currentUser, provider);
+    },
+    async deleteAccount() {
+      if (!auth?.currentUser) throw {code:'app/not-ready'};
+      await sdk.deleteUser(auth.currentUser);
     }
 
   };

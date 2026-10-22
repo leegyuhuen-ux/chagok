@@ -4,6 +4,10 @@
     {"collectionGroup": "reports", "fieldPath": "status", "indexes": [
       {"order": "ASCENDING", "queryScope": "COLLECTION"},
       {"order": "ASCENDING", "queryScope": "COLLECTION_GROUP"}
+    ]},
+    {"collectionGroup": "comments", "fieldPath": "authorUid", "indexes": [
+      {"order": "ASCENDING", "queryScope": "COLLECTION"},
+      {"order": "ASCENDING", "queryScope": "COLLECTION_GROUP"}
     ]}
   ]
 }

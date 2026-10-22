@@ -190,3 +190,12 @@ footer{gap:16px;flex-wrap:wrap}
 }
 /* Community controls remain usable with long text and narrow screens. */
 .search-bar{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}.search-bar input{flex:1;min-width:140px;border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:#fff;font:inherit;color:inherit}.search-bar button{min-height:44px}.result-count{text-align:center;margin:20px 0}.load-more{display:block;margin:16px auto;min-height:44px}.report-actions{display:flex;gap:8px;flex-wrap:wrap}.report-section{margin-top:32px}.guide-content p{line-height:1.8;overflow-wrap:anywhere}.guide-content h3{margin-top:24px}.skip-link{position:fixed;left:16px;top:-100px;background:#243931;color:#fff;padding:12px;z-index:1000}.skip-link:focus{top:12px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #627d61;outline-offset:3px}.post-note{overflow-wrap:anywhere}.card h2,.list-item h3{overflow-wrap:anywhere}footer .text-button{min-height:44px}#app:focus{outline:none}
+
+/* Launch: landing intro, consent, legal links, footer, restrictions. */
+.intro-list{list-style:none;padding:0;margin:22px 0;display:grid;gap:10px}.intro-list li{display:grid;gap:2px;padding:12px 14px;background:var(--paper);border-radius:8px;font-size:14px}.intro-list span{font-size:13px;color:var(--muted)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6;margin:4px 0 12px}.consent input{width:18px;height:18px;min-height:0;margin:2px 0 0;flex-shrink:0;accent-color:var(--green)}.consent a,.legal-links a,.text-link{text-decoration:underline;text-underline-offset:3px}
+.legal-links{font-size:12px;color:var(--muted);text-align:center;margin:20px 0 0}.legal-links .text-button{padding:0;font-size:12px}
+.guide-list{padding-left:20px;font-size:14px;line-height:1.9}
+.notice.warning{background:#f8ece7;color:#8c4b3f}
+.danger-fill{background:#ad5449}
+footer{align-items:center;flex-wrap:wrap;gap:8px 16px}.footer-copy{margin:0}.footer-links{display:flex;flex-wrap:wrap;gap:0 14px}.footer-links .text-button{font-size:inherit;color:inherit;padding:10px 0;display:inline-flex;align-items:center}

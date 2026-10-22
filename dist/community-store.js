@@ -57,6 +57,20 @@
       watchComments(uid,id,onData,onError){check(uid);return sdk.onSnapshot(sdk.collection(db,'posts',id,'comments'),s=>{if(uid===getUid())onData(rows(s))},onError)},
       async comment(uid,id,text,author){check(uid);await sdk.addDoc(sdk.collection(db,'posts',id,'comments'),{text:text.trim(),author,authorUid:uid,createdAt:sdk.serverTimestamp()});check(uid)},
       async deleteComment(uid,id,commentId){check(uid);await sdk.deleteDoc(sdk.doc(db,'posts',id,'comments',commentId));check(uid)},
+      watchBan(uid,onData,onError){check(uid);return sdk.onSnapshot(sdk.doc(db,'bans',uid),s=>{if(uid===getUid())onData(s.exists()?s.data():null)},onError)},
+      watchBans(uid,onData,onError){check(uid);return sdk.onSnapshot(sdk.collection(db,'bans'),s=>{if(uid===getUid())onData(rows(s))},onError)},
+      async ban(uid,target,nickname,reason,posts=[]){
+        check(uid);const batch=sdk.writeBatch(db);batch.set(sdk.doc(db,'bans',target),{nickname,reason:reason.trim(),createdAt:sdk.serverTimestamp()});
+        for(const p of posts)batch.update(sdk.doc(db,'posts',p.id),{hidden:true,updatedAt:sdk.serverTimestamp(),revision:p.revision+1});
+        await batch.commit();check(uid);
+      },
+      async unban(uid,target){check(uid);await sdk.deleteDoc(sdk.doc(db,'bans',target));check(uid)},
+      async removeMemberContent(uid){
+        check(uid);const mine=await sdk.getDocs(sdk.query(sdk.collection(db,'posts'),sdk.where('authorUid','==',uid)));check(uid);
+        for(const post of mine.docs)if(!post.data().deleted)await this.deletePost(uid,post.id,post.data().revision);
+        const comments=await sdk.getDocs(sdk.query(sdk.collectionGroup(db,'comments'),sdk.where('authorUid','==',uid)));check(uid);
+        for(const comment of comments.docs){await sdk.deleteDoc(comment.ref);check(uid);}
+      },
       async notice(uid,title){check(uid);await sdk.addDoc(sdk.collection(db,'announcements'),{title:title.trim(),authorUid:uid,createdAt:sdk.serverTimestamp()});check(uid)},
       async deleteNotice(uid,id){check(uid);await sdk.deleteDoc(sdk.doc(db,'announcements',id));check(uid)}
     };

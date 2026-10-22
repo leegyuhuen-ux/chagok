@@ -31,8 +31,8 @@ async function main(){
   await assertFails(sdk.setDoc(sdk.doc(alice,'users','alice'),{...good,nickname:'<script>'}));
   await assertFails(sdk.setDoc(sdk.doc(alice,'users','alice'),{...good,payload:'x'.repeat(700001)}));
   await assertFails(sdk.setDoc(sdk.doc(alice,'users','alice'),{...good,updatedAt:new Date(0)}));
-  await assertFails(sdk.deleteDoc(sdk.doc(alice,'users','alice')));
-  console.log('PASS schema, nickname, size, revision, timestamp and document deletion protection');
+  await assertFails(sdk.deleteDoc(sdk.doc(bob,'users','alice')));
+  console.log('PASS schema, nickname, size, revision, timestamp and cross-account deletion protection');
   const cleaned=await storeA.save('alice',{...saved.state,records:[]},saved.revision);
   assert.equal((await deviceTwo.load('alice')).state.records.length,0);
   const races=await Promise.allSettled([storeA.save('alice',{...cleaned.state,nickname:'동시수정A'},cleaned.revision),deviceTwo.save('alice',{...cleaned.state,nickname:'동시수정B'},cleaned.revision)]);

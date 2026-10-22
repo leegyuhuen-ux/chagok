@@ -18,7 +18,7 @@ async function editRecord(id){
  form.onsubmit=async e=>{
   e.preventDefault();if(version!==modalVersion||!requireMember())return;const data=Object.fromEntries(new FormData(form));data.name=data.name.trim();if(!data.name)return toast('차 이름을 입력해주세요.');
   let photos;try{photos=photoEditor.get()}catch(error){$('#record-error').textContent=error.message;return;}
-  const record={...data,id:r.id,author:nickname(),authorUid:uid,sample:false};const next=draftState();if(id)next.records=next.records.map(item=>item.id===id?record:item);else next.records.push(record);
+  const record={...data,id:r.id,author:nickname(),authorUid:uid};const next=draftState();if(id)next.records=next.records.map(item=>item.id===id?record:item);else next.records.push(record);
   const publish=data.visibility==='public';const ok=await commitState(next,{recordId:r.id,publish,photos,postRevision:assets.postRevision});
   if(ok&&version===modalVersion){selected=data.date;month=new Date(data.date+'T12:00:00');month.setDate(1);closeModal();if(publish)go('feed');else render();toast(publish?(assets.postHidden&&!assets.postDeleted?'기록을 저장했어요. 관리자 숨김 상태는 유지돼요.':'차 기록을 저장하고 게시판에 공개했어요.'):'나만 보는 차 기록을 저장했어요.');}
  };
@@ -28,8 +28,8 @@ async function confirmDelete(id){
  if(!requireMember())return;const r=state.records.find(r=>r.id===id);if(!r)return;const uid=currentUser.uid,version=modalVersion;
  try{
   const store=await chagokAuth.getStore();const assets=r.sharedPostId?await store.loadRecordAssets(uid,r):{postRevision:null};if(uid!==currentUser?.uid||version!==modalVersion)return;
-  const next=draftState();next.records=next.records.filter(item=>item.id!==id);delete next.comments[id];
-  next.likes=next.likes.filter(x=>x!==id);next.saved=next.saved.filter(x=>x!==id&&x!==r.sharedPostId);
+  const next=draftState();next.records=next.records.filter(item=>item.id!==id);
+  next.saved=next.saved.filter(x=>x!==id&&x!==r.sharedPostId);
   if(await commitState(next,{recordId:id,publish:false,photos:[],postRevision:assets.postRevision})){if(version===modalVersion){closeModal();render();toast('기록과 연결된 게시글을 삭제했어요.');}}
  }catch(error){if(uid===currentUser?.uid&&version===modalVersion){toast(cloudError(error.code));$('#record-error').textContent=cloudError(error.code);}}
 }

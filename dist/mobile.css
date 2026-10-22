@@ -1,7 +1,7 @@
 /* Responsive refinements. Calendar details stay readable in the daily panel. */
 .brand-by{display:block;font:normal 14px/1.5 "Malgun Gothic",sans-serif;letter-spacing:0;color:#55704e}
 .brand>span:last-child{min-width:0}
-.membership-locked .sidebar,.membership-locked .prototype{display:none}
+.membership-locked .sidebar{display:none}
 .membership-locked main{margin-left:0;max-width:1100px;margin-right:auto;margin-left:auto}
 .access-card{max-width:520px;margin:clamp(24px,7vh,80px) auto;padding:clamp(20px,5vw,40px);background:white;border:1px solid var(--line);border-radius:14px}
 .access-card h1{font-size:clamp(24px,4vw,32px);line-height:1.5;overflow-wrap:anywhere}
@@ -15,7 +15,7 @@ button:disabled{opacity:.55;cursor:wait}
 .topbar{gap:8px;flex-wrap:wrap}
 @media(max-width:720px){#sync-status{order:3;width:100%;margin:0;padding:0}.topbar{padding:8px 0}.access-card .text-button{display:block;margin:12px auto}}
 html{ -webkit-text-size-adjust:100%;text-size-adjust:100% }
-main,#app,.workspace,.calendar-box,.day-panel,.card,.preview-copy,.list-item>div,.page-heading>div,.field{min-width:0}
+main,#app,.workspace,.calendar-box,.day-panel,.card,.list-item>div,.page-heading>div,.field{min-width:0}
 .card h2,.card p,.record h3,.record p,.list-item h3,.comment,.notice{overflow-wrap:anywhere}
 .record p{white-space:pre-wrap}
 nav button>.nav-text{font-size:14px;width:auto;text-align:left}
@@ -32,7 +32,7 @@ footer{gap:16px;flex-wrap:wrap}
 @media(max-width:1150px){
  .day-panel{display:block}
  .calendar-toolbar{flex-wrap:wrap;gap:14px}
- .community-row{grid-template-columns:minmax(0,1fr)}
+ 
 }
 @media(max-width:900px){
  .cards{grid-template-columns:minmax(0,1fr)}
@@ -54,13 +54,13 @@ footer{gap:16px;flex-wrap:wrap}
  .topbar{height:auto;min-height:60px;gap:8px;flex-wrap:wrap;padding:8px 0}
  .topbar>span{font-size:12px}
  .topbar button{font-size:12px;min-height:44px;padding:8px 10px}
- .prototype{display:block;font-size:12px;line-height:1.6;margin-top:14px}
- .prototype span{font-size:12px;margin-left:5px;color:#6b7566}
+ 
+ 
  .page-heading{align-items:flex-start;gap:12px;margin:24px 0 20px}
  h1{font-size:28px;line-height:1.35;letter-spacing:-.6px}
  .eyebrow{font-size:12px;letter-spacing:1px}
  .sub{font-size:14px;line-height:1.7}
- .primary,.small-btn,.text-button,.filters button,.card-actions button,.lower-heading button{min-height:44px;font-size:14px}
+ .primary,.small-btn,.text-button,.filters button,.card-actions button{min-height:44px;font-size:14px}
  .primary{padding:10px 16px}
  .page-heading>.primary{width:100%}
  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -85,10 +85,10 @@ footer{gap:16px;flex-wrap:wrap}
  .tea-chip{font-size:12px;padding:3px 7px;width:max-content;max-width:100%}
  .record h3{font-size:18px}.record p{font-size:16px;line-height:1.8}
  .record-meta{font-size:12px;color:#6d7765}
- .lower-heading{gap:8px}.lower-heading h2{font-size:16px}
- .preview-art{width:88px;flex-shrink:0}.preview-copy{padding:14px 12px}
- .preview-copy small,.preview-copy p{font-size:12px}.preview-copy h3{font-size:16px}
- .event-mini{padding:18px;gap:16px}.event-mini span,.event-mini p{font-size:12px}.event-mini h3{font-size:16px}
+ 
+ 
+ 
+ 
  .cards{grid-template-columns:minmax(0,1fr)}.card{padding:20px}.card p{font-size:16px}
  .card img{width:calc(100% + 40px);margin:-20px -20px 16px;height:auto;aspect-ratio:16/10;object-fit:cover}
  .card-actions{gap:12px;flex-wrap:wrap}.card-actions button{padding:8px}

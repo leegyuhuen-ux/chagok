@@ -1,20 +1,9 @@
 'use strict';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=new Date(), fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`, today=fmt(now), base=today.slice(0,7);
-let state;try{state=JSON.parse(localStorage.getItem('chagok-v1'))}catch{}
-const defaults={records:[],likes:[],saved:[],comments:{},joined:[],hidden:[],announcements:[],nickname:''};
-state={...JSON.parse(JSON.stringify(defaults)),...(state&&Array.isArray(state.records)?state:{})};
-if(!state.cleanStart){
- const removed=new Set(state.records.filter(r=>r.sample===true).map(r=>r.id));
- ['p1','p2','p3','t1','t2','t3'].forEach(id=>removed.add(id));
- state.records=state.records.filter(r=>r.sample!==true);
- for(const key of ['likes','saved','hidden'])state[key]=state[key].filter(id=>!removed.has(id));
- for(const id of removed)delete state.comments[id];
- state.joined=state.joined.filter(id=>!['e1','e2'].includes(id));
- state.cleanStart=true;
- try{localStorage.setItem('chagok-v1',JSON.stringify(state))}catch{}
-}
-let storageKey='chagok-v1', currentUser=null;
+const defaults={records:[],saved:[],nickname:''};
+let state=JSON.parse(JSON.stringify(defaults));
+let currentUser=null;
 let cloud={uid:null,phase:'idle',revision:null,error:null},cloudGeneration=0;
 let page='calendar',month=new Date(now.getFullYear(),now.getMonth(),1),selected=today,filter='전체';
 function toast(t){$('#toast').textContent=t;$('#toast').classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
@@ -31,7 +20,6 @@ function moveMonth(n){if(!requireMember())return;month=new Date(month.getFullYea
 $('#login').onclick=()=>currentUser?showProfile():startGoogleLogin();
 $('#profile').onclick=showProfile;
 $('#modal').addEventListener('click',e=>{if(e.target===$('#modal')){const r=$('#modal').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeModal()}});
-if(document.modelContext?.registerTool){try{document.modelContext.registerTool({name:'start_tea_record',description:'Open the tea record form for a valid date; does not save a record.',inputSchema:{type:'object',properties:{date:{type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}$'}},required:['date'],additionalProperties:false},annotations:{readOnlyHint:false},execute(input){if(!isMember())throw new Error('Sign in and set a nickname first');if(!/^\d{4}-\d{2}-\d{2}$/.test(input.date)||Number.isNaN(Date.parse(input.date))||new Date(input.date).toISOString().slice(0,10)!==input.date)throw new Error('Invalid date');selected=input.date;editRecord();return {opened:true,date:selected}}})}catch{}}
 render();
 
 function authMessage(code){return ({'auth/invalid-api-key':'구글 로그인 설정의 API 키가 올바르지 않아요. 운영자에게 알려주세요.','auth/api-key-not-valid.-please-pass-a-valid-api-key.':'구글 로그인 설정의 API 키가 올바르지 않아요. 운영자에게 알려주세요.','app/not-configured':'구글 로그인 설정을 준비하고 있어요.','app/not-ready':'로그인 연결을 확인하고 있어요. 잠시 후 다시 시도해주세요.','app/https-required':'구글 로그인은 게시된 웹사이트에서 이용해주세요.','auth/popup-blocked':'브라우저에서 팝업을 허용한 뒤 다시 로그인해주세요.','auth/popup-closed-by-user':'로그인을 취소했어요.','auth/cancelled-popup-request':'이미 로그인 창이 열려 있어요.','auth/unauthorized-domain':'현재 사이트 주소의 로그인 허용 설정이 필요해요.','auth/operation-not-allowed':'구글 로그인 사용 설정이 필요해요.','auth/network-request-failed':'인터넷 연결을 확인하고 다시 시도해주세요.'})[code]||'로그인 연결에 실패했어요. 새로고침한 뒤 다시 시도해주세요.'}
@@ -114,7 +102,7 @@ async function saveNickname(value,uid){
 function updateAuthUI(){
  const a=globalThis.chagokAuth,user=a?.user||null;const changed=(currentUser?.uid||null)!==(user?.uid||null);
  if(changed){globalThis.resetCommunity?.();++cloudGeneration;closeModal();state=JSON.parse(JSON.stringify(defaults));cloud={uid:null,phase:'idle',revision:null,error:null};filter='전체';page='calendar';}
- currentUser=user;const adminSlot=$('#admin-slot');if(adminSlot)adminSlot.innerHTML=user?.isAdmin===true&&isMember()?'<button data-page="admin" onclick="go(\'admin\')">⚙ 관리자</button>':'';storageKey=user?'chagok-user-'+user.uid:'chagok-v1';
+ currentUser=user;const adminSlot=$('#admin-slot');if(adminSlot)adminSlot.innerHTML=user?.isAdmin===true&&isMember()?'<button data-page="admin" onclick="go(\'admin\')">⚙ 관리자</button>':'';
  $('#login').textContent=user?'내 계정':a?.configured&&!a.ready?'로그인 확인 중…':'Google 로그인 ↗';
  $('#profile b').textContent=user?(nickname()||'내 계정'):'로그인이 필요해요';
  $('#profile .avatar').textContent=(user&&nickname()?nickname():'茶').slice(0,1);

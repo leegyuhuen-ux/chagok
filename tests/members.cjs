@@ -33,7 +33,7 @@ const {createChagokStore}=require('../dist/cloud-store.js'),{createCommunityStor
   await A.removeMemberContent('alice');
   for(const id of [spam,kept]){const post=(await sdk.getDocFromServer(sdk.doc(ad,'posts',id))).data();assert.equal(post.deleted,true);assert.equal(post.note,'');assert.equal(post.photoCount,0);}
   await env.withSecurityRulesDisabled(async ctx=>assert.equal((await sdk.getDoc(sdk.doc(ctx.firestore(),'posts',kept,'media','photos'))).exists(),false));
-  const left=(await sdk.getDocs(sdk.collection(b,'posts',bobPost,'comments'))).docs.map(d=>d.data().author);assert.deepEqual(left,['다른차벗']);
+  const left=(await sdk.getDocs(sdk.collection(b,'posts',bobPost,'comments'))).docs.map(d=>d.data().author);assert.deepEqual(left,['다른차벗']);assert.equal(await B.countComments('bob',bobPost),1);
   await storeA.deleteAccount('alice');
   assert.equal((await sdk.getDocFromServer(sdk.doc(a,'users','alice'))).exists(),false);
   assert.equal((await sdk.getDocs(sdk.collection(a,'users','alice','recordMedia'))).size,0);

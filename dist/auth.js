@@ -49,6 +49,13 @@
       ]);
       sdk = authModule;
       app = appModule.initializeApp(config);
+      // App Check must start before Firestore is used. Until enforcement is on, a load failure only skips it.
+      if (window.CHAGOK_APP_CHECK_KEY) {
+        try {
+          const appCheck = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js');
+          appCheck.initializeAppCheck(app, {provider: new appCheck.ReCaptchaEnterpriseProvider(window.CHAGOK_APP_CHECK_KEY), isTokenAutoRefreshEnabled: true});
+        } catch (error) { console.warn('App Check unavailable', error); }
+      }
       auth = sdk.getAuth(app);
       auth.languageCode = 'ko';
       await sdk.setPersistence(auth, sdk.browserLocalPersistence);

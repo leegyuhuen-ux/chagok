@@ -54,6 +54,7 @@
       },
       async deleteEvent(uid,id,revision){check(uid);const ref=sdk.doc(db,'events',id);await sdk.runTransaction(db,async tx=>{const s=await tx.get(ref);check(uid);if(!s.exists()||s.data().revision!==revision)throw conflict();tx.delete(ref)});check(uid)},
       async moderate(uid,id,hidden,revision){check(uid);const ref=sdk.doc(db,'posts',id);await sdk.runTransaction(db,async tx=>{const s=await tx.get(ref);check(uid);if(!s.exists()||s.data().revision!==revision)throw Object.assign(new Error('Changed'),{code:'app/conflict'});tx.update(ref,{hidden,updatedAt:sdk.serverTimestamp(),revision:revision+1})});check(uid)},
+      async countComments(uid,id){check(uid);const s=await sdk.getCountFromServer(sdk.collection(db,'posts',id,'comments'));check(uid);return s.data().count},
       watchComments(uid,id,onData,onError){check(uid);return sdk.onSnapshot(sdk.collection(db,'posts',id,'comments'),s=>{if(uid===getUid())onData(rows(s))},onError)},
       async comment(uid,id,text,author){check(uid);await sdk.addDoc(sdk.collection(db,'posts',id,'comments'),{text:text.trim(),author,authorUid:uid,createdAt:sdk.serverTimestamp()});check(uid)},
       async deleteComment(uid,id,commentId){check(uid);await sdk.deleteDoc(sdk.doc(db,'posts',id,'comments',commentId));check(uid)},

@@ -44,7 +44,7 @@ if(typeof window!=='undefined'){const boot=()=>{window.addEventListener('chagok-
 function nickname(){return typeof state.nickname==='string'?state.nickname:''}
 function validNickname(value){return /^[가-힣a-zA-Z0-9_]{2,16}$/.test(value)}
 function isMember(){const a=globalThis.chagokAuth;return !!(a?.ready&&!a.error&&currentUser&&a.user?.uid===currentUser.uid&&cloud.uid===currentUser.uid&&['ready','saving'].includes(cloud.phase)&&validNickname(nickname()))}
-function requireMember(){if(cloud.phase==='saving'){toast('서버에 저장 중이에요. 잠시 기다려주세요.');return false;}if(isMember())return true;closeModal();renderGate();return false}
+function requireMember(){if(cloud.phase==='saving'){toast('저장 중이에요. 잠시만 기다려주세요.');return false;}if(isMember())return true;closeModal();renderGate();return false}
 function renderGate(){
  document.body?.classList.add('membership-locked');
  const a=globalThis.chagokAuth;
@@ -63,10 +63,10 @@ function renderNicknameSetup(editing=false){
 }
 function showProfile(){
  if(!requireMember())return;
- openModal('나의 찻자리',`<h3>${esc(nickname())}</h3><p id="server-check" role="status" class="sub"></p><p class="sub">내 기록 ${state.records.length}개 · 저장한 기록 ${state.saved.length}개</p><div class="notice">닉네임과 차 기록은 내 계정에 저장돼요. 다른 기기에서도 로그인하면 불러올 수 있어요. 커뮤니티에 게시한 글은 다른 회원도 볼 수 있어요.</div><div class="form-actions"><button class="small-btn" onclick="exportRecords()">내 기록 내보내기</button><button class="small-btn" onclick="verifyServerData()">서버 저장 확인</button><button class="small-btn" onclick="closeModal();loadAccount()">서버 기록 다시 불러오기</button><button class="small-btn" onclick="renderNicknameSetup(true)">닉네임 변경</button><button class="small-btn" onclick="closeModal();filter='저장한 기록';go('feed')">저장한 기록</button><button class="primary" onclick="logoutGoogle()">로그아웃</button></div><p class="legal-links"><a href="terms.html" target="_blank" rel="noopener">이용약관</a> · <a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a> · <button class="text-button danger" onclick="askWithdraw()">회원 탈퇴</button></p>`);
+ openModal('나의 찻자리',`<div class="profile-card"><span class="avatar">${esc(nickname().slice(0,1))}</span><div><h3>${esc(nickname())}</h3><p class="sub">모든 기록은 자동으로 저장돼요</p></div></div><div class="profile-stats"><div><strong>${state.records.length}</strong><span>내 기록</span></div><div><strong>${community.items.filter(p=>p.authorUid===currentUser.uid&&!p.deleted).length}</strong><span>공개한 글</span></div><div><strong>${state.saved.length}</strong><span>저장한 글</span></div></div><div class="profile-menu"><button onclick="closeModal();filter='저장한 기록';go('feed')">저장한 글 보기<span>›</span></button><button onclick="renderNicknameSetup(true)">닉네임 변경<span>›</span></button><button onclick="exportRecords()">내 기록 내보내기<span>›</span></button></div><button class="small-btn profile-logout" onclick="logoutGoogle()">로그아웃</button><p class="legal-links"><a href="terms.html" target="_blank" rel="noopener">이용약관</a> · <a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a> · <button class="text-button danger" onclick="askWithdraw()">회원 탈퇴</button></p>`);
 }
-function cloudError(code){return ({'permission-denied':'데이터베이스 접근 규칙을 확인해주세요. 본인 계정의 저장 권한이 필요해요.','unavailable':'서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.','not-found':'데이터베이스가 아직 준비되지 않았어요.','app/conflict':'다른 기기에서 먼저 수정했어요. 서버 기록을 다시 불러온 후 수정해주세요.','app/account-changed':'계정이 변경되어 작업을 중단했어요.','app/already-reported':'이미 신고한 게시글이에요. 운영자가 확인할게요.','app/photos-invalid':'사진은 JPG 형식으로 최대 3장까지 첨부할 수 있어요. 사진을 다시 선택해주세요.','app/storage-limit':'저장할 정보가 너무 커요. 기록을 정리한 뒤 다시 시도해주세요.','app/invalid-data':'저장된 데이터 형식을 확인해야 해요.'})[code]||'서버 작업을 완료하지 못했어요. 잠시 후 다시 시도해주세요.'}
-function updateSyncStatus(){const el=$('#sync-status');if(el)el.textContent=cloud.phase==='loading'?'내 정보 불러오는 중…':cloud.phase==='saving'?'서버에 저장 중…':cloud.error?'저장 오류':cloud.phase==='ready'?'서버 연결됨':'';}
+function cloudError(code){return ({'permission-denied':'데이터베이스 접근 규칙을 확인해주세요. 본인 계정의 저장 권한이 필요해요.','unavailable':'인터넷 연결을 확인하고 다시 시도해주세요.','not-found':'데이터베이스가 아직 준비되지 않았어요.','app/conflict':'다른 기기에서 바뀐 내용을 불러왔어요. 다시 저장해주세요.','app/account-changed':'계정이 변경되어 작업을 중단했어요.','app/already-reported':'이미 신고한 게시글이에요. 운영자가 확인할게요.','app/photos-invalid':'사진은 JPG 형식으로 최대 3장까지 첨부할 수 있어요. 사진을 다시 선택해주세요.','app/storage-limit':'저장할 정보가 너무 커요. 기록을 정리한 뒤 다시 시도해주세요.','app/invalid-data':'저장된 데이터 형식을 확인해야 해요.'})[code]||'저장하지 못했어요. 잠시 후 다시 시도해주세요.'}
+function updateSyncStatus(){const el=$('#sync-status');if(el)el.textContent=cloud.phase==='loading'?'내 정보 불러오는 중…':cloud.phase==='saving'?'저장 중…':cloud.error?'저장하지 못했어요':'';}
 async function loadAccount(){
  const uid=currentUser?.uid;if(!uid)return;
  const version=++cloudGeneration;cloud={uid,phase:'loading',revision:null,error:null};state=JSON.parse(JSON.stringify(defaults));closeModal();renderGate();updateSyncStatus();
@@ -87,7 +87,7 @@ async function commitState(next,recordChange=null){
   state={...JSON.parse(JSON.stringify(defaults)),...result.state};cloud={uid,phase:'ready',revision:result.revision,error:null};updateSyncStatus();return true;
  }catch(error){
   if(currentUser?.uid!==uid||generation!==cloudGeneration)return false;
-  cloud.phase='ready';cloud.error=error.code||'unknown';updateSyncStatus();toast(cloudError(cloud.error));
+  cloud.phase='ready';cloud.error=error.code||'unknown';updateSyncStatus();toast(cloudError(cloud.error));if(cloud.error==='app/conflict')void refreshAccount(uid,generation);
   const inline=$('#record-error')||$('#comment-error');if(inline)inline.textContent=cloudError(cloud.error);
   return false;
  }
@@ -95,7 +95,7 @@ async function commitState(next,recordChange=null){
 function draftState(){return JSON.parse(JSON.stringify(state))}
 function showCloudGate(){
  const loading=cloud.phase==='loading';
- $('#app').innerHTML=`<section class="access-card"><div class="eyebrow">차곡 by 바라티</div><h1>${loading?'내 찻자리를 불러와요':'내 정보를 불러오지 못했어요'}</h1><p class="sub">${loading?'닉네임과 차 기록을 서버에서 확인하고 있어요.':esc(cloudError(cloud.error))}</p>${loading?'':'<button class="primary" onclick="loadAccount()">다시 불러오기</button>'}<button class="text-button" onclick="logoutGoogle()">로그아웃</button></section>`;
+ $('#app').innerHTML=`<section class="access-card"><div class="eyebrow">차곡 by 바라티</div><h1>${loading?'내 찻자리를 불러와요':'내 정보를 불러오지 못했어요'}</h1><p class="sub">${loading?'닉네임과 차 기록을 불러오고 있어요.':esc(cloudError(cloud.error))}</p>${loading?'':'<button class="primary" onclick="loadAccount()">다시 불러오기</button>'}<button class="text-button" onclick="logoutGoogle()">로그아웃</button></section>`;
 }
 async function saveNickname(value,uid){
  if(!currentUser||currentUser.uid!==uid||globalThis.chagokAuth?.user?.uid!==uid||cloud.phase!=='ready')return false;
@@ -104,7 +104,7 @@ async function saveNickname(value,uid){
  const button=$('#save-nickname');button.disabled=true;button.textContent='저장 중…';
  const next=draftState();next.nickname=value;const ok=await commitState(next);
  if(currentUser?.uid!==uid)return false;
- if(ok){closeModal();updateAuthUI();toast('닉네임을 서버에 저장했어요.');}
+ if(ok){closeModal();updateAuthUI();toast('닉네임을 바꿨어요.');}
  else if($('#nickname-error'))$('#nickname-error').textContent=cloudError(cloud.error);
  if($('#save-nickname')){$('#save-nickname').disabled=false;$('#save-nickname').textContent='닉네임 저장';}
  return ok;
@@ -116,20 +116,15 @@ function updateAuthUI(){
  $('#login').textContent=user?'내 계정':a?.configured&&!a.ready?'로그인 확인 중…':'Google 로그인 ↗';
  $('#profile b').textContent=user?(nickname()||'내 계정'):'로그인이 필요해요';
  $('#profile .avatar').textContent=(user&&nickname()?nickname():'茶').slice(0,1);
- $('#profile small').textContent=user?'서버에 저장되는 차생활':'Google로 시작하기';
+ $('#profile small').textContent=user?'내 계정 · 설정':'Google로 시작하기';
  document.body?.classList.toggle('membership-locked',!isMember());updateSyncStatus();
  if(user&&a?.ready&&!a.error&&(changed||cloud.uid!==user.uid)){void loadAccount();return;}
  if(isMember()){go(page);globalThis.startCommunity?.();}else renderGate();
 }
-
-async function verifyServerData(){
- if(!requireMember())return false;const uid=currentUser.uid,generation=cloudGeneration;
- const message=$('#server-check');if(message)message.textContent='서버에서 다시 읽어 확인하고 있어요…';
- try{
-  const store=await globalThis.chagokAuth.getStore();const remote=await store.load(uid);
-  if(generation!==cloudGeneration||currentUser?.uid!==uid)return false;
-  const same=remote.revision===cloud.revision&&Object.keys(defaults).every(key=>JSON.stringify(remote.state[key])===JSON.stringify(state[key]));
-  const result=same?'서버 저장 확인 완료 · 닉네임과 내 기록 '+state.records.length+'개가 일치해요.':'서버에 다른 변경이 있어요. 서버 기록을 다시 불러와주세요.';
-  if($('#server-check'))$('#server-check').textContent=result;toast(result);return same;
- }catch(error){if(generation===cloudGeneration&&$('#server-check'))$('#server-check').textContent=cloudError(error.code);return false;}
+async function refreshAccount(uid,generation){
+ // After a revision conflict, pull the latest account data so the next save succeeds.
+ try{const store=await globalThis.chagokAuth.getStore();const result=await store.load(uid);
+  if(generation!==cloudGeneration||currentUser?.uid!==uid||cloud.phase!=='ready')return;
+  state={...JSON.parse(JSON.stringify(defaults)),...result.state};cloud={uid,phase:'ready',revision:result.revision,error:null};updateSyncStatus();
+ }catch{}
 }

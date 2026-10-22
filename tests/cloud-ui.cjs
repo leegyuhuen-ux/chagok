@@ -47,6 +47,8 @@ run('go("admin")');assert(el('#app').innerHTML.includes('작성자 이용 제한
 run("community.ban={reason:'광고'}");assert(run("cloudError('permission-denied')").includes('제한'));run('community.ban=null');assert(!run("cloudError('permission-denied')").includes('제한'));
 run('showProfile()');assert(el('#modal-body').innerHTML.includes('회원 탈퇴'));run('askWithdraw()');assert(el('#modal-body').innerHTML.includes('Google 계정 확인 후 탈퇴'));run('closeModal()');
 assert.equal(storage['chagok-signed-in'],'1');run('chagokAuth.ready=false;renderGate()');assert(el('#app').innerHTML.includes('차곡을 여는 중'));run('chagokAuth.ready=true;updateAuthUI()');
+run("filter='전체';go('talk')");assert(el('#app').innerHTML.includes('post-note clamp'));assert(el('#app').innerHTML.includes('data-comment-count'));run('openPost(posts()[0].id)');assert(el('#modal-body').innerHTML.includes('detail-comments'));assert(el('#modal-body').innerHTML.includes('shared-comment-form'));run('closeModal()');
+console.log('PASS post detail UI: clamped cards, comment counts, detail view with comments.');
 console.log('PASS member tools UI: admin ban controls, banned-member error message, withdrawal entry point.');
 context.chagokAuth.user=null;run('updateAuthUI()');assert.equal(run('community.items.length'),0);assert.equal(storage['chagok-signed-in'],undefined);run('renderGate()');assert(el('#app').innerHTML.includes('Google 계정으로 시작하기'));assert.equal(run('community.notices.length'),0);assert.equal(el('#admin-slot').innerHTML,'');assert.equal(run('photoCache.size'),0);
 console.log('PASS shared UI: saved stories, escaped member content, ownership controls, admin-only navigation, logout clears shared data.');

@@ -208,3 +208,11 @@ footer{align-items:center;flex-wrap:wrap;gap:8px 16px}.footer-copy{margin:0}.foo
 
 /* Reload for returning members: quiet opening instead of the landing page. */
 .app-opening{min-height:60vh;display:grid;place-content:center;justify-items:center;gap:14px;color:var(--muted);font-size:14px}.app-opening .seal{animation:opening 1.4s ease-in-out infinite}@keyframes opening{50%{opacity:.35}}@media(prefers-reduced-motion:reduce){.app-opening .seal{animation:none}}
+
+/* Post cards open a detail view: clamped preview, full post with comments. */
+.card-title{display:block;width:100%;padding:0;text-align:left;font:inherit;letter-spacing:inherit;overflow-wrap:anywhere}.card-title:hover{text-decoration:underline;text-underline-offset:4px;filter:none}
+.post-note.clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;line-clamp:4;overflow:hidden}
+.post-detail .meta{font-size:12px;color:#8a9282;margin-bottom:10px}.post-detail .post-note{font-size:15px;line-height:1.9;margin:16px 0}.post-detail .card-actions{display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}.post-detail .card-actions button{font-size:13px;min-height:44px}
+.post-detail .photo-thumb{display:block;padding:0;border:0;border-radius:8px;overflow:hidden;background:#edf1e8;aspect-ratio:4/3;min-width:0}.post-detail .photo-thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.detail-comments{margin-top:24px}.detail-comments h3{font-size:15px;margin:0 0 4px}#detail-comment-count{color:var(--muted);font-weight:normal}
+.comment-meta{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.comment-meta span{font-size:12px;color:var(--muted);white-space:nowrap}

@@ -2,9 +2,8 @@
 (function(root){
   function fault(code){return Object.assign(new Error(code),{code})}
   function cleanState(input={}){
-    const result={nickname:typeof input.nickname==='string'?input.nickname:'',records:[],likes:[],saved:[],comments:{},joined:[],hidden:[],announcements:[]};
-    for(const key of ['records','likes','saved','joined','hidden','announcements'])if(Array.isArray(input[key]))result[key]=input[key];
-    if(input.comments&&typeof input.comments==='object'&&!Array.isArray(input.comments))result.comments=input.comments;
+    const result={nickname:typeof input.nickname==='string'?input.nickname:'',records:[],saved:[]};
+    for(const key of ['records','saved'])if(Array.isArray(input[key]))result[key]=input[key];
     if(result.nickname&&!/^[가-힣a-zA-Z0-9_]{2,16}$/.test(result.nickname))throw fault('app/invalid-nickname');
     return JSON.parse(JSON.stringify(result));
   }

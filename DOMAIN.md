@@ -35,25 +35,24 @@ Cloudflare를 쓰면 프록시(주황 구름)를 끄고 ‘DNS only’로 둡니
 ## 4. GitHub 설정
 
 1. 계정 Settings → Pages → Add a domain에서 도메인 소유를 인증합니다. 안내된 TXT 레코드를 DNS에 추가합니다. 다른 사람이 도메인을 가로채는 것을 막습니다.
-2. 저장소 Settings → Pages → Custom domain에 도메인(예: `chagok.kr`)을 입력하고 저장합니다. Actions 배포 방식이라 `CNAME` 파일은 필요 없습니다.
+2. 저장소 Settings → Pages → Custom domain에 도메인(예: `chagokchacha.com`)을 입력하고 저장합니다. Actions 배포 방식이라 `CNAME` 파일은 필요 없습니다.
 3. DNS 확인이 끝나면 Enforce HTTPS를 켭니다. 인증서 발급에 최대 1시간 정도 걸립니다.
 
 ## 5. Firebase·Google 로그인 설정 (빠뜨리면 로그인 불가)
 
-1. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인에 `chagok.kr`, `www.chagok.kr`을 추가합니다. 없으면 `auth/unauthorized-domain` 오류가 납니다.
+1. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인에 `chagokchacha.com`, `www.chagokchacha.com`을 추가합니다. 없으면 `auth/unauthorized-domain` 오류가 납니다.
 2. Google Cloud 콘솔(프로젝트 chagok1-173f9) → Google 인증 플랫폼 → 브랜딩에서 아래를 입력합니다. 로그인 창에 표시되는 정보입니다.
-   - 앱 홈페이지: `https://chagok.kr`
-   - 개인정보처리방침: `https://chagok.kr/privacy.html`
-   - 서비스 약관: `https://chagok.kr/terms.html`
-   - 승인된 도메인: `chagok.kr`
+   - 앱 홈페이지: `https://chagokchacha.com`
+   - 개인정보처리방침: `https://chagokchacha.com/privacy.html`
+   - 서비스 약관: `https://chagokchacha.com/terms.html`
+   - 승인된 도메인: `chagokchacha.com`
 
-## 6. 도메인이 정해지면 코드에 반영할 것
+## 6. 코드 반영 (완료)
 
-도메인을 알려주면 바로 반영합니다.
-
-- `index.html`: `<link rel="canonical">`, `og:url`, `og:image`(공유 미리보기 이미지)
-- `robots.txt`: `Sitemap:` 줄과 `sitemap.xml`
-- `404.html`은 도메인 루트(`/`) 기준으로 만들어져 있어 연결 후 바로 맞게 동작합니다.
+- `index.html`·`terms.html`·`privacy.html`: `https://chagokchacha.com` 기준 canonical, `og:url`
+- `robots.txt`의 `Sitemap:` 줄과 `sitemap.xml`
+- `404.html`은 도메인 루트(`/`) 기준으로 동작합니다.
+- 남은 선택 사항: `og:image`(카카오톡·SNS 공유 미리보기 이미지). 이미지가 준비되면 추가합니다.
 
 ## 7. 개인정보처리방침 확인
 

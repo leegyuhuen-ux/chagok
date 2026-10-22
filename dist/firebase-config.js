@@ -7,5 +7,5 @@ window.CHAGOK_FIREBASE_CONFIG = {
   messagingSenderId: '60753587531',
   appId: '1:60753587531:web:6048fad04820331e6e0cce'
 };
-// reCAPTCHA Enterprise site key for Firebase App Check (public). Empty until registered in the console.
-window.CHAGOK_APP_CHECK_KEY = '';
+// reCAPTCHA Enterprise site key for Firebase App Check (public).
+window.CHAGOK_APP_CHECK_KEY = '6LcGyPstAAAAABTLreilXeBuPoXJlH0PB-rMAW4H';

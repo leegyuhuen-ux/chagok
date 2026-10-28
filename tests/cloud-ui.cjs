@@ -42,7 +42,7 @@ run("community.eventsPhase='ready';community.events=[{id:'event1',title:'공개 
 assert(el('#app').innerHTML.includes('공개 이벤트'));assert(!el('#app').innerHTML.includes('비공개초안'));assert(!el('#app').innerHTML.includes('이벤트 만들기'));assert(!el('#app').innerHTML.includes('이벤트 수정'));
 context.chagokAuth.user.isAdmin=true;run('updateAuthUI();go("admin")');assert(el('#app').innerHTML.includes('커뮤니티 관리'));assert(el('#admin-slot').innerHTML.includes('관리자'));
 run("go('events')");assert(el('#app').innerHTML.includes('이벤트 만들기'));assert(el('#app').innerHTML.includes('비공개초안'));
-run("filter='전체';go('feed')");assert(el('#app').innerHTML.indexOf('우롱차</button>')<el('#app').innerHTML.indexOf('보이차</button>'));
+run("filter='전체';go('feed')");assert(el('#app').innerHTML.indexOf('보이차</button>')<el('#app').innerHTML.indexOf('우롱차</button>'));assert(el('#app').innerHTML.includes('녹차</button>'));assert(el('#app').innerHTML.includes('그 외</button>'));
 run('go("admin")');assert(el('#app').innerHTML.includes('작성자 이용 제한'));run("community.bans=[{id:'bob',nickname:'다른차벗',reason:'광고'}];renderAdmin()");assert(!el('#app').innerHTML.includes('작성자 이용 제한'));
 run("community.ban={reason:'광고'}");assert(run("cloudError('permission-denied')").includes('제한'));run('community.ban=null');assert(!run("cloudError('permission-denied')").includes('제한'));
 run('showProfile()');assert(el('#modal-body').innerHTML.includes('회원 탈퇴'));run('askWithdraw()');assert(el('#modal-body').innerHTML.includes('Google 계정 확인 후 탈퇴'));run('closeModal()');

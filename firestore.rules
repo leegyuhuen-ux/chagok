@@ -32,7 +32,7 @@ service cloud.firestore {
         && count is int && count >= 0 && count <= 3
         && ((count == 0 && !existsAfter(/databases/$(database)/documents/posts/$(id)/media/photos))
           || (count > 0 && getAfter(/databases/$(database)/documents/posts/$(id)/media/photos).data.photos.size() == count))
-        && d.kind in ['record','talk'] && d.type in ['보이차','우롱차','홍차']
+        && d.kind in ['record','talk'] && d.type in ['보이차','우롱차','홍차','녹차','그 외']
         && d.name is string && d.name.size() > 0 && d.name.size() <= 80
         && d.note is string && d.note.size() <= 3000
         && d.author is string && d.authorUid is string

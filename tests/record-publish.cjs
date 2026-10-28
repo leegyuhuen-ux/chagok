@@ -21,7 +21,7 @@ const {createCommunityStore}=require('../dist/community-store.js');
   assert.deepEqual((await sdk.getDocFromServer(sdk.doc(b,'posts',id,'media','photos'))).data().photos,photos);
   saved.state.records[0].name='수정된 기록';await save(true,0);assert.equal(saved.state.records[0].sharedPostId,id);
   await assert.rejects(()=>save(true,0),e=>e.code==='app/conflict');
-  const bad=structuredClone(saved.state);bad.records[0].type='녹차';await assertFails(save(true,1,bad));
+  const bad=structuredClone(saved.state);bad.records[0].type='커피';await assertFails(save(true,1,bad));
   assert.equal((await A.load('alice')).revision,saved.revision);
   await Admin.moderate('admin',id,true,1);await save(true,2);
   assert.equal((await sdk.getDocFromServer(sdk.doc(a,'posts',id))).data().hidden,true);
